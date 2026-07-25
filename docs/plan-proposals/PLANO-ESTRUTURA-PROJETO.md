@@ -145,7 +145,7 @@ projeto/
 
 - A árvore de diretórios corresponde à estrutura definida neste documento.
 - O pacote `src/<package>/` e os pacotes em `tools/` possuem `__init__.py`.
-- `python -m tools.garbage_collector` é o ponto de entrada das ferramentas de
+- `uv run python -m tools.garbage_collector` é o ponto de entrada das ferramentas de
   manutenção.
 - Os documentos de raiz e os `README.md` de diretórios especializados possuem
   uma descrição concisa de sua finalidade.

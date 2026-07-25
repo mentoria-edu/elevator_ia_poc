@@ -12,10 +12,10 @@ A ferramenta não pode excluir, sobrescrever ou mover arquivos automaticamente.
 
 Permitir executar:
 
-    python -m tools.garbage_collector scan
-    python -m tools.garbage_collector inventory
-    python -m tools.garbage_collector report
-    python -m tools.garbage_collector check
+    uv run python -m tools.garbage_collector scan
+    uv run python -m tools.garbage_collector inventory
+    uv run python -m tools.garbage_collector report
+    uv run python -m tools.garbage_collector check
 
 O comando check deve executar o fluxo completo:
 
@@ -58,6 +58,7 @@ qualquer uma das condições abaixo ocorrer:
 - `extensions`, quando informado, não for uma lista de extensões de texto;
 - `patterns`, quando informado, não for uma lista de padrões de texto;
 - `max_age_days`, quando informado, não for um inteiro maior ou igual a zero;
+- `tracked_only`, quando informado, não for booleano;
 - o caminho configurado for absoluto ou escapar da raiz do projeto.
 
 O resultado da validação deve ser explícito:
@@ -127,6 +128,7 @@ declarados no YAML:
 - `extensions` limita a busca às extensões informadas;
 - `patterns` compara os nomes relativos conforme o padrão configurado;
 - `max_age_days` compara a última modificação com a data de referência;
+- `tracked_only: true` restringe a regra a caminhos versionados pelo Git;
 - exceções válidas e vigentes impedem apenas o candidato correspondente ao
   mesmo `path` e não alteram os demais resultados;
 - nenhum arquivo é considerado obsoleto apenas por estar sem referências
@@ -237,6 +239,7 @@ Reutilizar arquivos equivalentes já existentes. Criar ou completar:
         ├── rules.py
         ├── scan.py
         ├── inventory.py
+        ├── output_paths.py
         └── report.py
 
     tests/
@@ -266,21 +269,17 @@ Formato inicial:
         severity: warning
         action: review
 
-      - id: expired-exception
-        description: Exceção com prazo expirado
-        path: docs/garbage-collector/exceptions/active-exceptions.yml
-        severity: error
-        action: review
-
       - id: tracked-temporary-file
         description: Arquivo temporário versionado
         patterns: ["*.tmp", "*.bak", "*.log", "*.pyc", "__pycache__", ".DS_Store"]
+        tracked_only: true
         severity: warning
         action: review
 
       - id: stale-report
         description: Relatório antigo que pode ser arquivado
         path: docs/garbage-collector/reports
+        patterns: ["????-??-??-scan.md"]
         extensions: [.md]
         max_age_days: 90
         severity: warning
@@ -377,9 +376,9 @@ Requisitos:
 
 Exemplos:
 
-    python -m tools.garbage_collector scan
-    python -m tools.garbage_collector check --project-root .
-    python -m tools.garbage_collector check --fail-on warning
+    uv run python -m tools.garbage_collector scan
+    uv run python -m tools.garbage_collector check --project-root .
+    uv run python -m tools.garbage_collector check --fail-on warning
 
 ## Segurança e limites de mutação
 
@@ -490,7 +489,8 @@ dependências precisarem ser isoladas.
 
 O plano estará concluído quando:
 
-- python -m tools.garbage_collector check funcionar em um repositório válido;
+- `uv run python -m tools.garbage_collector check` funcionar em um repositório
+  válido;
 - configurações inválidas produzirem mensagens claras;
 - exceções válidas forem mantidas ativas até sua remoção explícita;
 - ExecPlans antigos forem identificados conforme a configuração;
@@ -506,10 +506,10 @@ O plano estará concluído quando:
 
 Executar, adaptando os comandos à configuração efetiva:
 
-    ruff check .
-    ruff format --check .
-    pytest tests/garbage_collector/
-    python -m tools.garbage_collector check
+    uv run --group dev ruff check .
+    uv run --group dev ruff format --check .
+    uv run --group dev pytest tests/garbage_collector/
+    uv run python -m tools.garbage_collector check
     git diff --check
     git status --short
 

@@ -31,6 +31,11 @@ Consulte `docs/standards/` para os padrões completos de código, testes,
 logging e documentação. Mudanças de comportamento exigem testes observáveis;
 testes não devem depender de rede ou serviços externos.
 
+O Garbage Collector é executado com
+`uv run python -m tools.garbage_collector check`. Ele apenas identifica
+candidatos à revisão e pode gravar inventários e relatórios em
+`docs/garbage-collector/`; nunca use seu fluxo para excluir ou mover arquivos.
+
 ## Alterações e Revisão
 
 Faça commits pequenos, no imperativo e com escopo claro, por exemplo
