@@ -1,0 +1,25 @@
+version: 1
+rules:
+  - id: stale-active-exec-plan
+    description: ExecPlan ativo sem atualização recente
+    path: docs/exec-plans/active
+    extensions: [.md]
+    max_age_days: 30
+    severity: warning
+    action: review
+
+  - id: tracked-temporary-file
+    description: Arquivo temporário versionado
+    patterns: ["*.tmp", "*.bak", "*.log", "*.pyc", "__pycache__", ".DS_Store"]
+    tracked_only: true
+    severity: warning
+    action: review
+
+  - id: stale-report
+    description: Relatório antigo que precisa de revisão
+    path: docs/garbage-collector/reports
+    patterns: ["????-??-??-scan.md"]
+    extensions: [.md]
+    max_age_days: 90
+    severity: warning
+    action: review
