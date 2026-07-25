@@ -78,10 +78,9 @@ raise ValueError(
 Use as ferramentas definidas no projeto:
 
 ```bash
-ruff check .
-ruff format .
+uv run --group dev ruff check .
+uv run --group dev ruff format .
 ```
 
 Não altere manualmente o estilo formatado pelo Ruff para atender preferências
 individuais.
-

@@ -17,7 +17,9 @@ def test_find_missing_directories_returns_empty_tuple_when_structure_exists(
     assert find_missing_directories(tmp_path) == ()
 
 
-def test_find_missing_directories_lists_missing_directory(tmp_path: Path) -> None:
+def test_find_missing_directories_lists_missing_directory(
+    tmp_path: Path,
+) -> None:
     (tmp_path / "docs/exec-plans/active").mkdir(parents=True)
 
     assert find_missing_directories(tmp_path) == (
@@ -25,7 +27,9 @@ def test_find_missing_directories_lists_missing_directory(tmp_path: Path) -> Non
     )
 
 
-def test_find_plan_issues_reports_missing_required_section(tmp_path: Path) -> None:
+def test_find_plan_issues_reports_missing_required_section(
+    tmp_path: Path,
+) -> None:
     active_directory = tmp_path / "docs/exec-plans/active"
     active_directory.mkdir(parents=True)
     (tmp_path / "docs/exec-plans/completed").mkdir(parents=True)
@@ -43,7 +47,9 @@ def test_find_plan_issues_reports_missing_required_section(tmp_path: Path) -> No
     )
 
 
-def test_find_plan_issues_reports_delimited_code_fences(tmp_path: Path) -> None:
+def test_find_plan_issues_reports_delimited_code_fences(
+    tmp_path: Path,
+) -> None:
     active_directory = tmp_path / "docs/exec-plans/active"
     active_directory.mkdir(parents=True)
     (tmp_path / "docs/exec-plans/completed").mkdir(parents=True)

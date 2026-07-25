@@ -48,8 +48,7 @@ Collector.
 Todos os testes devem ser executáveis com um único comando:
 
 ```bash
-pytest
+uv run --group dev pytest
 ```
 
 O comando deve ser executado antes de concluir uma alteração.
-

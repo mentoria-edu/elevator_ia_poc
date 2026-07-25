@@ -15,15 +15,16 @@ negócio pertencem a `docs/business-rules/`, não a instruções de agentes.
 
 ## Qualidade
 
-Use Python 3.11+ e anotações nos pontos públicos. Nomes devem ser específicos
+Use Python 3.14.5+ e anotações nos pontos públicos. Nomes devem ser específicos
 e em `snake_case`; classes usam `PascalCase`. Formate e valide antes de abrir
 uma alteração:
 
 ```bash
-ruff check .
-ruff format --check .
-pytest
-python -m tools.validators.check_exec_plans
+uv run --group dev ruff check .
+uv run --group dev ruff format --check .
+uv run --group dev mypy
+uv run --group dev pytest
+uv run python -m tools.validators.check_exec_plans
 ```
 
 Consulte `docs/standards/` para os padrões completos de código, testes,

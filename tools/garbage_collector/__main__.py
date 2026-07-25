@@ -3,7 +3,10 @@
 
 def main() -> int:
     """Informa o estado da ferramenta sem executar varreduras não definidas."""
-    print("Garbage Collector inicializado; nenhuma regra de varredura configurada.")
+    print(
+        "Garbage Collector inicializado; "
+        "nenhuma regra de varredura configurada."
+    )
     return 0
 
 

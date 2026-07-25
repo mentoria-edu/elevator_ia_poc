@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 EXEC_PLAN_DIRECTORIES = (
     Path("docs/exec-plans/active"),
     Path("docs/exec-plans/completed"),
@@ -27,7 +26,10 @@ def find_missing_directories(root: Path) -> tuple[Path, ...]:
 def find_plan_issues(root: Path) -> tuple[str, ...]:
     """Retorna violações verificáveis da convenção de ExecPlans."""
     missing_directories = find_missing_directories(root)
-    issues = [f"Diretório obrigatório ausente: {path}" for path in missing_directories]
+    issues = [
+        f"Diretório obrigatório ausente: {path}"
+        for path in missing_directories
+    ]
     if missing_directories:
         return tuple(issues)
 
@@ -47,7 +49,9 @@ def find_file_issues(root: Path, plan_path: Path) -> tuple[str, ...]:
         if section not in content
     ]
     if "```" in content:
-        issues.append(f"{relative_path}: não use blocos de código delimitados.")
+        issues.append(
+            f"{relative_path}: não use blocos de código delimitados."
+        )
     return tuple(issues)
 
 

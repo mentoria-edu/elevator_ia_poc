@@ -6,6 +6,8 @@
 - `tests/unit/`: testes do comportamento da aplicação.
 - `tools/`: ferramentas determinísticas de manutenção do repositório.
 - `docs/`: documentação operacional, padrões e regras de negócio.
+- `plan-proposals/`: propostas iniciais que registram a intenção de projetos
+  ou funcionalidades antes de sua execução.
 
 ## Dependências Permitidas
 
