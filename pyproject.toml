@@ -1,0 +1,32 @@
+[project]
+name = "elevator-vibe-code"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.8"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+preview = true
+select = ["B", "E", "F", "I", "W"]
+
+[tool.ruff.format]
+preview = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+addopts = ["-p", "no:warnings", "--cov=src", "--cov-context=test"]
+
+[tool.harness.validation]
+commands = ["typos", "ruff check .", "ruff format --check .", "pytest"]
