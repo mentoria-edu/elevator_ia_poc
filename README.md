@@ -33,5 +33,5 @@ uv run python -m tools.validators.check_exec_plans
 O pacote principal fica em `src/elevator_vibe_code/`. Consulte
 `ARCHITECTURE.md` para os limites de módulos e `AGENTS.md` para o fluxo de
 contribuição. As intenções iniciais de implementação ficam em
-`plan-proposals/`; planos de execução em andamento e concluídos ficam em
+`docs/plan-proposals/`; planos de execução em andamento e concluídos ficam em
 `docs/exec-plans/`.
