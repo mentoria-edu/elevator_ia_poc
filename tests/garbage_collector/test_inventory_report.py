@@ -136,6 +136,6 @@ def test_report_is_written_only_in_reports_directory(
     destination = write_report(_scan_result(tmp_path))
 
     assert destination.relative_to(tmp_path).as_posix() == (
-        "docs/garbage-collector/reports/2026-07-25-scan.md"
+        "docs/garbage_collector/reports/2026_07_25_scan.md"
     )
     assert marker.read_text(encoding="utf-8") == "unchanged"

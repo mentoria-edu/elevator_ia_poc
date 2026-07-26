@@ -42,11 +42,11 @@ def write_valid_configuration(
 ) -> None:
     """Cria os dois arquivos de configuração padrão."""
     rules_path = (
-        project_root / "docs/garbage-collector/rules/default-rules.yml"
+        project_root / "docs/garbage_collector/rules/default_rules.yml"
     )
     exceptions_path = (
         project_root
-        / "docs/garbage-collector/exceptions/active-exceptions.yml"
+        / "docs/garbage_collector/exceptions/active_exceptions.yml"
     )
     rules_path.parent.mkdir(parents=True)
     exceptions_path.parent.mkdir(parents=True)

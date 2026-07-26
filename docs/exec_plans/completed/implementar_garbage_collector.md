@@ -63,9 +63,9 @@ Ruff, a verificação de formatação, Mypy, Pytest, o validador de ExecPlans, `
 
 ## Contexto e Orientação
 
-O Garbage Collector é uma ferramenta de manutenção em `tools/garbage_collector/`; não faz parte do domínio da aplicação em `src/elevator_vibe_code/`. Suas configurações e saídas ficam em `docs/garbage-collector/`, e seus testes pertencem a `tests/garbage_collector/`. “Candidato” significa um caminho que uma regra marcou para revisão humana, nunca uma autorização para remoção. O projeto usa Python 3.14.5 e todos os comandos Python e de qualidade devem ser executados por `uv`.
+O Garbage Collector é uma ferramenta de manutenção em `tools/garbage_collector/`; não faz parte do domínio da aplicação em `src/elevator_vibe_code/`. Suas configurações e saídas ficam em `docs/garbage_collector/`, e seus testes pertencem a `tests/garbage_collector/`. “Candidato” significa um caminho que uma regra marcou para revisão humana, nunca uma autorização para remoção. O projeto usa Python 3.14.5 e todos os comandos Python e de qualidade devem ser executados por `uv`.
 
-As regras são carregadas de `docs/garbage-collector/rules/default-rules.yml`. Exceções ativas ficam em `docs/garbage-collector/exceptions/active-exceptions.yml`. O inventário atual fica em `docs/garbage-collector/inventory/inventory.yml`, cópias históricas ficam em `inventory/history/` e relatórios Markdown ficam em `reports/`.
+As regras são carregadas de `docs/garbage_collector/rules/default_rules.yml`. Exceções ativas ficam em `docs/garbage_collector/exceptions/active_exceptions.yml`. O inventário atual fica em `docs/garbage_collector/inventory/inventory.yml`, cópias históricas ficam em `inventory/history/` e relatórios Markdown ficam em `reports/`.
 
 ## Plano de Trabalho
 
@@ -119,4 +119,4 @@ A dependência de produção será `PyYAML==6.0.3`, acompanhada no grupo de dese
 
 Os modelos públicos da ferramenta usarão `dataclasses` e enums. O relógio e o provedor de caminhos Git serão protocolos injetáveis, permitindo testes determinísticos sem rede. Não haverá API nova no pacote da aplicação.
 
-Nota de alteração (2026-07-25): criado a partir da proposta `docs/plan-proposals/PLANO-IMPLEMENTACAO-GARBAGE-COLLECTOR.md`, incorporando o fluxo obrigatório com uv e resolvendo a incompatibilidade entre exceções permanentes e a regra de expiração.
+Nota de alteração (2026-07-25): criado a partir da proposta `docs/plan_proposals/plano_implementacao_garbage_collector.md`, incorporando o fluxo obrigatório com uv e resolvendo a incompatibilidade entre exceções permanentes e a regra de expiração.

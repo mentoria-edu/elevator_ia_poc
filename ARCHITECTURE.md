@@ -6,8 +6,16 @@
 - `tests/unit/`: testes do comportamento da aplicação.
 - `tools/`: ferramentas determinísticas de manutenção do repositório.
 - `docs/`: documentação operacional, padrões e regras de negócio.
-- `docs/plan-proposals/`: propostas iniciais que registram a intenção de projetos
+- `docs/plan_proposals/`: propostas iniciais que registram a intenção de projetos
   ou funcionalidades antes de sua execução.
+
+## Convenção de Nomes
+
+Use `snake_case` para diretórios e arquivos auxiliares do repositório,
+incluindo `.py`, `.md` de apoio, `.yml` e equivalentes. As únicas exceções em
+`UPPERCASE` são `AGENTS.md`, `ARCHITECTURE.md`, `PLANS.md` e todos os arquivos
+`README.md`. Ao renomear qualquer caminho, atualize na mesma alteração todas as
+referências textuais e operacionais para manter o repositório coerente.
 
 ## Dependências Permitidas
 

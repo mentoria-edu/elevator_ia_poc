@@ -96,8 +96,8 @@ def test_scan_uses_strict_age_limit_and_records_evidence(
 ) -> None:
     reports = tmp_path / "reports"
     reports.mkdir()
-    exact = reports / "2026-06-25-scan.md"
-    stale = reports / "2026-06-24-scan.md"
+    exact = reports / "2026_06_25_scan.md"
+    stale = reports / "2026_06_24_scan.md"
     exact.write_text("exact", encoding="utf-8")
     stale.write_text("stale", encoding="utf-8")
     exact_timestamp = (FIXED_NOW - timedelta(days=30)).timestamp()
@@ -106,14 +106,14 @@ def test_scan_uses_strict_age_limit_and_records_evidence(
     os.utime(stale, (stale_timestamp, stale_timestamp))
     provider = FakeRepositoryPathProvider(
         visible=(
-            "reports/2026-06-25-scan.md",
-            "reports/2026-06-24-scan.md",
+            "reports/2026_06_25_scan.md",
+            "reports/2026_06_24_scan.md",
         )
     )
     rule = _rule(
         id="stale",
         path=PurePosixPath("reports"),
-        patterns=("????-??-??-scan.md",),
+        patterns=("????_??_??_scan.md",),
         extensions=(".md",),
         max_age_days=30,
         tracked_only=False,
@@ -127,7 +127,7 @@ def test_scan_uses_strict_age_limit_and_records_evidence(
     )
 
     assert len(result.candidates) == 1
-    assert result.candidates[0].path.name == "2026-06-24-scan.md"
+    assert result.candidates[0].path.name == "2026_06_24_scan.md"
     assert result.candidates[0].last_modified is not None
     assert ("age_days", "31") in {
         (evidence.criterion, evidence.value)

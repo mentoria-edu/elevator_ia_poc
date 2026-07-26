@@ -2,7 +2,7 @@ version: 1
 rules:
   - id: stale-active-exec-plan
     description: ExecPlan ativo sem atualização recente
-    path: docs/exec-plans/active
+    path: docs/exec_plans/active
     extensions: [.md]
     max_age_days: 30
     severity: warning
@@ -17,8 +17,8 @@ rules:
 
   - id: stale-report
     description: Relatório antigo que precisa de revisão
-    path: docs/garbage-collector/reports
-    patterns: ["????-??-??-scan.md"]
+    path: docs/garbage_collector/reports
+    patterns: ["????_??_??_scan.md"]
     extensions: [.md]
     max_age_days: 90
     severity: warning

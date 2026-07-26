@@ -92,7 +92,7 @@ def write_inventory(scan_result: ScanResult) -> tuple[Path, Path]:
         ),
     )
     history_filename = scan_result.generated_at.strftime(
-        "%Y-%m-%dT%H%M%SZ.yml"
+        "%Y_%m_%d_%H%M%Sz.yml"
     )
     historical = history_path(scan_result.project_root, history_filename)
     current = current_inventory_path(scan_result.project_root)

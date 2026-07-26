@@ -49,7 +49,7 @@ O uv cria e sincroniza `.venv/` a partir de `pyproject.toml` e `uv.lock`. O grup
 
 ## Plano de Trabalho
 
-Atualizar `pyproject.toml` para exigir Python 3.14.5 ou superior, separar dependências de produção e desenvolvimento, fixar as versões das ferramentas e configurar Mypy. Criar `.python-version` com o uv e gerar `uv.lock`. Atualizar todos os comandos Python nos documentos do repositório para usar uv e incluir Mypy no fluxo de qualidade. Sincronizar os ambientes de produção e desenvolvimento e executar as verificações. Ao final, registrar os resultados e mover este plano para `docs/exec-plans/completed/`.
+Atualizar `pyproject.toml` para exigir Python 3.14.5 ou superior, separar dependências de produção e desenvolvimento, fixar as versões das ferramentas e configurar Mypy. Criar `.python-version` com o uv e gerar `uv.lock`. Atualizar todos os comandos Python nos documentos do repositório para usar uv e incluir Mypy no fluxo de qualidade. Sincronizar os ambientes de produção e desenvolvimento e executar as verificações. Ao final, registrar os resultados e mover este plano para `docs/exec_plans/completed/`.
 
 ## Etapas Concretas
 

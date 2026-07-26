@@ -5,11 +5,11 @@ import re
 import tempfile
 from pathlib import Path
 
-CURRENT_INVENTORY = Path("docs/garbage-collector/inventory/inventory.yml")
-INVENTORY_HISTORY = Path("docs/garbage-collector/inventory/history")
-REPORTS = Path("docs/garbage-collector/reports")
-HISTORY_NAME = re.compile(r"\d{4}-\d{2}-\d{2}T\d{6}Z\.yml")
-REPORT_NAME = re.compile(r"\d{4}-\d{2}-\d{2}-scan\.md")
+CURRENT_INVENTORY = Path("docs/garbage_collector/inventory/inventory.yml")
+INVENTORY_HISTORY = Path("docs/garbage_collector/inventory/history")
+REPORTS = Path("docs/garbage_collector/reports")
+HISTORY_NAME = re.compile(r"\d{4}_\d{2}_\d{2}_\d{6}z\.yml")
+REPORT_NAME = re.compile(r"\d{4}_\d{2}_\d{2}_scan\.md")
 
 
 class OutputWriteError(Exception):

@@ -10,8 +10,8 @@ domínio sem uma responsabilidade recorrente e documentada.
 ## Fluxo de Trabalho
 
 Leia `ARCHITECTURE.md` antes de incluir módulos e registre planos ativos em
-`docs/exec-plans/active/`. Mova um plano concluído para `completed/`. Regras de
-negócio pertencem a `docs/business-rules/`, não a instruções de agentes.
+`docs/exec_plans/active/`. Mova um plano concluído para `completed/`. Regras de
+negócio pertencem a `docs/business_rules/`, não a instruções de agentes.
 
 ## Qualidade
 
@@ -31,10 +31,16 @@ Consulte `docs/standards/` para os padrões completos de código, testes,
 logging e documentação. Mudanças de comportamento exigem testes observáveis;
 testes não devem depender de rede ou serviços externos.
 
+Para nomes de caminhos do repositório, use `snake_case` em diretórios e
+arquivos auxiliares, incluindo `.py`, `.md` de apoio, `.yml` e equivalentes.
+Somente `AGENTS.md`, `ARCHITECTURE.md`, `PLANS.md` e arquivos `README.md`
+permanecem em `UPPERCASE`. Sempre mantenha as referências textuais e os paths
+operacionais sincronizados com o nome real do arquivo ou diretório.
+
 O Garbage Collector é executado com
 `uv run python -m tools.garbage_collector check`. Ele apenas identifica
 candidatos à revisão e pode gravar inventários e relatórios em
-`docs/garbage-collector/`; nunca use seu fluxo para excluir ou mover arquivos.
+`docs/garbage_collector/`; nunca use seu fluxo para excluir ou mover arquivos.
 
 ## Alterações e Revisão
 

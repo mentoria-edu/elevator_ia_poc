@@ -118,7 +118,7 @@ def render_configuration_error_report(
 
 def write_report(scan_result: ScanResult) -> Path:
     """Grava o relatório diário no único diretório permitido."""
-    filename = scan_result.generated_at.strftime("%Y-%m-%d-scan.md")
+    filename = scan_result.generated_at.strftime("%Y_%m_%d_scan.md")
     destination = report_path(scan_result.project_root, filename)
     write_atomic(destination, render_report(scan_result))
     return destination
@@ -130,7 +130,7 @@ def write_configuration_error_report(
     errors: Sequence[str],
 ) -> Path:
     """Grava um relatório diário de configuração inválida."""
-    filename = generated_at.strftime("%Y-%m-%d-scan.md")
+    filename = generated_at.strftime("%Y_%m_%d_scan.md")
     destination = report_path(project_root, filename)
     content = render_configuration_error_report(
         generated_at, project_root, errors

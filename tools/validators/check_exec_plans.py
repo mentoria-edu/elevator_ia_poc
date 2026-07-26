@@ -5,8 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 EXEC_PLAN_DIRECTORIES = (
-    Path("docs/exec-plans/active"),
-    Path("docs/exec-plans/completed"),
+    Path("docs/exec_plans/active"),
+    Path("docs/exec_plans/completed"),
 )
 REQUIRED_SECTIONS = (
     "## Progresso",
