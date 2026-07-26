@@ -25,9 +25,9 @@ from tools.garbage_collector.scan import (
     scan_repository,
 )
 
-DEFAULT_RULES_FILE = "docs/garbage-collector/rules/default-rules.yml"
+DEFAULT_RULES_FILE = "docs/garbage_collector/rules/default_rules.yml"
 DEFAULT_EXCEPTIONS_FILE = (
-    "docs/garbage-collector/exceptions/active-exceptions.yml"
+    "docs/garbage_collector/exceptions/active_exceptions.yml"
 )
 
 

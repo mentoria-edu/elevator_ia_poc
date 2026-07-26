@@ -52,13 +52,13 @@ def test_subcommands_write_only_their_allowed_outputs(
         now=fixed_now,
     )
 
-    inventory = tmp_path / "docs/garbage-collector/inventory/inventory.yml"
+    inventory = tmp_path / "docs/garbage_collector/inventory/inventory.yml"
     history = (
         tmp_path
-        / "docs/garbage-collector/inventory/history"
-        / "2026-07-25T123000Z.yml"
+        / "docs/garbage_collector/inventory/history"
+        / "2026_07_25_123000z.yml"
     )
-    report = tmp_path / "docs/garbage-collector/reports/2026-07-25-scan.md"
+    report = tmp_path / "docs/garbage_collector/reports/2026_07_25_scan.md"
     assert exit_code == 0
     assert (inventory.exists(), history.exists(), report.exists()) == expected
     assert marker.read_text(encoding="utf-8") == "unchanged"
@@ -135,7 +135,7 @@ def test_invalid_configuration_returns_two_and_report_writes_error(
         now=fixed_now,
     )
 
-    report = tmp_path / "docs/garbage-collector/reports/2026-07-25-scan.md"
+    report = tmp_path / "docs/garbage_collector/reports/2026_07_25_scan.md"
     assert exit_code == 2
     assert "Erros de configuração" in report.read_text(encoding="utf-8")
 
@@ -157,7 +157,7 @@ def test_unsafe_configuration_does_not_write_report(tmp_path: Path) -> None:
 
     assert exit_code == 2
     assert not (
-        tmp_path / "docs/garbage-collector/reports/2026-07-25-scan.md"
+        tmp_path / "docs/garbage_collector/reports/2026_07_25_scan.md"
     ).exists()
 
 

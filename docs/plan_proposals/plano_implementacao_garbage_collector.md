@@ -73,7 +73,7 @@ arquivo de regras.
 ### 2. Validação das exceções
 
 Antes da varredura, o sistema deve ler
-`docs/garbage-collector/exceptions/active-exceptions.yml` e verificar, para
+`docs/garbage_collector/exceptions/active_exceptions.yml` e verificar, para
 cada exceção:
 
 - o arquivo de exceções existir;
@@ -101,7 +101,7 @@ O resultado deve seguir estas regras:
   houver uma opção explícita de permitir arquivo vazio.
 
 A validação das exceções não remove registros nem altera o arquivo
-`active-exceptions.yml`.
+`active_exceptions.yml`.
 
 ### 3. Validação da raiz e dos caminhos
 
@@ -214,11 +214,11 @@ movimentação ou renomeação de arquivos do repositório.
 Reutilizar arquivos equivalentes já existentes. Criar ou completar:
 
     docs/
-    └── garbage-collector/
+    └── garbage_collector/
         ├── README.md
         ├── schedule.md
         ├── rules/
-        │   └── default-rules.yml
+        │   └── default_rules.yml
         ├── inventory/
         │   ├── inventory.yml
         │   └── history/
@@ -226,7 +226,7 @@ Reutilizar arquivos equivalentes já existentes. Criar ou completar:
         │   ├── README.md
         │   └── .gitkeep
         └── exceptions/
-            └── active-exceptions.yml
+            └── active_exceptions.yml
 
     tools/
     ├── __init__.py
@@ -255,7 +255,7 @@ Respeitar AGENTS.md, ARCHITECTURE.md, PLANS.md e docs/standards/.
 
 ## Regras iniciais
 
-Declarar as regras em docs/garbage-collector/rules/default-rules.yml.
+Declarar as regras em docs/garbage_collector/rules/default_rules.yml.
 
 Formato inicial:
 
@@ -263,7 +263,7 @@ Formato inicial:
     rules:
       - id: stale-active-exec-plan
         description: ExecPlan ativo sem atualização recente
-        path: docs/exec-plans/active
+        path: docs/exec_plans/active
         extensions: [.md]
         max_age_days: 30
         severity: warning
@@ -278,8 +278,8 @@ Formato inicial:
 
       - id: stale-report
         description: Relatório antigo que pode ser arquivado
-        path: docs/garbage-collector/reports
-        patterns: ["????-??-??-scan.md"]
+        path: docs/garbage_collector/reports
+        patterns: ["????_??_??_scan.md"]
         extensions: [.md]
         max_age_days: 90
         severity: warning
@@ -289,7 +289,7 @@ As regras devem ser configuração, não critérios duplicados em módulos Pytho
 
 ## Exceções
 
-Usar `docs/garbage-collector/exceptions/active-exceptions.yml`.
+Usar `docs/garbage_collector/exceptions/active_exceptions.yml`.
 
 Cada exceção deve possuir `path`, `reason`, `owner` e
 `removal_condition`. Exceções permanecem ativas indefinidamente e só deixam
@@ -334,11 +334,11 @@ Cada candidato deve registrar:
 
 Gravar o inventário atual em:
 
-    docs/garbage-collector/inventory/inventory.yml
+    docs/garbage_collector/inventory/inventory.yml
 
 Gerar uma cópia histórica em:
 
-    docs/garbage-collector/inventory/history/YYYY-MM-DDTHHMMSSZ.yml
+    docs/garbage_collector/inventory/history/YYYY_MM_DD_HHMMSSz.yml
 
 O inventário deve descrever o estado observado. Ele não deve declarar que um
 arquivo pode ser removido; deve apenas registrar que ele é candidato à revisão.
@@ -347,7 +347,7 @@ arquivo pode ser removido; deve apenas registrar que ele é candidato à revisã
 
 Gerar relatórios em:
 
-    docs/garbage-collector/reports/YYYY-MM-DD-scan.md
+    docs/garbage_collector/reports/YYYY_MM_DD_scan.md
 
 O relatório deve conter data, quantidade de arquivos analisados, quantidade de
 candidatos, erros, warnings, versão das regras, tabela de candidatos, evidências
@@ -439,7 +439,7 @@ alto impacto, registrar também a decisão em um ADR, quando aplicável.
 
 ### Etapa 6 — Documentação e integração
 
-1. Documentar uso em docs/garbage-collector/README.md.
+1. Documentar uso em docs/garbage_collector/README.md.
 2. Documentar agendamento em schedule.md.
 3. Documentar relatórios.
 4. Atualizar AGENTS.md com o fluxo de segurança.

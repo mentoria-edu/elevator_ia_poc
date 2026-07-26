@@ -28,9 +28,9 @@ Os códigos de saída são:
 - `2`: argumentos, configuração, raiz ou Git inválidos;
 - `3`: falha ao gravar uma saída permitida.
 
-Regras declarativas ficam em `rules/default-rules.yml`. O campo opcional
+Regras declarativas ficam em `rules/default_rules.yml`. O campo opcional
 `tracked_only: true` restringe uma regra a arquivos versionados. Exceções
-ficam em `exceptions/active-exceptions.yml` e exigem `path`, `reason`, `owner`
+ficam em `exceptions/active_exceptions.yml` e exigem `path`, `reason`, `owner`
 e `removal_condition`; elas permanecem ativas até sua remoção explícita.
 
 As únicas saídas permitidas são `inventory/inventory.yml`, arquivos novos em

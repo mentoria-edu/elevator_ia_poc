@@ -16,8 +16,8 @@ def test_load_configuration_returns_typed_rules(tmp_path: Path) -> None:
 
     configuration = load_configuration(
         tmp_path,
-        "docs/garbage-collector/rules/default-rules.yml",
-        "docs/garbage-collector/exceptions/active-exceptions.yml",
+        "docs/garbage_collector/rules/default_rules.yml",
+        "docs/garbage_collector/exceptions/active_exceptions.yml",
     )
 
     assert configuration.rules_version == 1
@@ -77,8 +77,8 @@ def test_load_configuration_rejects_invalid_rules(
     with pytest.raises(ConfigurationError):
         load_configuration(
             tmp_path,
-            "docs/garbage-collector/rules/default-rules.yml",
-            "docs/garbage-collector/exceptions/active-exceptions.yml",
+            "docs/garbage_collector/rules/default_rules.yml",
+            "docs/garbage_collector/exceptions/active_exceptions.yml",
         )
 
 
@@ -100,8 +100,8 @@ def test_load_configuration_accumulates_errors(tmp_path: Path) -> None:
     with pytest.raises(ConfigurationError) as captured:
         load_configuration(
             tmp_path,
-            "docs/garbage-collector/rules/default-rules.yml",
-            "docs/garbage-collector/exceptions/active-exceptions.yml",
+            "docs/garbage_collector/rules/default_rules.yml",
+            "docs/garbage_collector/exceptions/active_exceptions.yml",
         )
 
     assert len(captured.value.errors) >= 6
@@ -156,8 +156,8 @@ def test_load_configuration_rejects_invalid_exceptions(
     with pytest.raises(ConfigurationError):
         load_configuration(
             tmp_path,
-            "docs/garbage-collector/rules/default-rules.yml",
-            "docs/garbage-collector/exceptions/active-exceptions.yml",
+            "docs/garbage_collector/rules/default_rules.yml",
+            "docs/garbage_collector/exceptions/active_exceptions.yml",
         )
 
 
@@ -178,8 +178,8 @@ def test_load_configuration_accepts_permanent_exception(
 
     configuration = load_configuration(
         tmp_path,
-        "docs/garbage-collector/rules/default-rules.yml",
-        "docs/garbage-collector/exceptions/active-exceptions.yml",
+        "docs/garbage_collector/rules/default_rules.yml",
+        "docs/garbage_collector/exceptions/active_exceptions.yml",
     )
 
     assert configuration.exceptions[0].path.as_posix() == "kept.txt"
@@ -187,6 +187,6 @@ def test_load_configuration_accepts_permanent_exception(
 
 def test_load_configuration_rejects_missing_files(tmp_path: Path) -> None:
     with pytest.raises(ConfigurationError) as captured:
-        load_configuration(tmp_path, "missing-rules.yml", "missing.yml")
+        load_configuration(tmp_path, "missing_rules.yml", "missing.yml")
 
     assert len(captured.value.errors) == 2

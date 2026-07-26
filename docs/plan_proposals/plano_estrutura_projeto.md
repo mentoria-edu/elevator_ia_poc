@@ -24,24 +24,24 @@ projeto/
 │   │
 │   ├── standards/
 │   │   ├── README.md
-│   │   ├── code-style.md
+│   │   ├── code_style.md
 │   │   ├── testing.md
 │   │   ├── logging.md
 │   │   └── documentation.md
 │   │
-│   ├── exec-plans/
+│   ├── exec_plans/
 │   │   ├── README.md
 │   │   ├── active/
 │   │   └── completed/
 │   │
-│   ├── business-rules/
+│   ├── business_rules/
 │   │   └── README.md
 │   │
-│   └── garbage-collector/
+│   └── garbage_collector/
 │       ├── README.md
 │       ├── schedule.md
 │       ├── rules/
-│       │   └── default-rules.yml
+│       │   └── default_rules.yml
 │       ├── inventory/
 │       │   ├── inventory.yml
 │       │   └── history/
@@ -49,7 +49,7 @@ projeto/
 │       │   ├── README.md
 │       │   └── .gitkeep
 │       └── exceptions/
-│           └── active-exceptions.yml
+│           └── active_exceptions.yml
 │
 ├── src/
 │   └── <package>/
@@ -99,9 +99,9 @@ projeto/
 | `README.md` | Visão geral do projeto, instalação, comandos principais e forma de uso. |
 | `pyproject.toml` | Metadados do projeto, dependências e configurações de ferramentas Python. |
 | `docs/standards/` | Padrões de código, testes, logging e documentação. |
-| `docs/exec-plans/` | ExecPlans em andamento e concluídos. |
-| `docs/business-rules/` | Regras do domínio descritas em linguagem de negócio. |
-| `docs/garbage-collector/` | Configuração, inventário, exceções, agenda e relatórios da manutenção do repositório. |
+| `docs/exec_plans/` | ExecPlans em andamento e concluídos. |
+| `docs/business_rules/` | Regras do domínio descritas em linguagem de negócio. |
+| `docs/garbage_collector/` | Configuração, inventário, exceções, agenda e relatórios da manutenção do repositório. |
 | `src/<package>/` | Implementação da aplicação. |
 | `tests/unit/` | Testes unitários do comportamento da aplicação. |
 | `tests/garbage_collector/` | Testes das ferramentas do Garbage Collector. |
@@ -121,11 +121,11 @@ projeto/
 
 ### Documentação
 
-- Registre regras de negócio em `docs/business-rules/` e implemente-as nos
+- Registre regras de negócio em `docs/business_rules/` e implemente-as nos
   módulos apropriados de `src/<package>/`.
 - Registre convenções em `docs/standards/`.
-- Use `docs/exec-plans/active/` para planos em execução e mova-os para
-  `docs/exec-plans/completed/` após a conclusão.
+- Use `docs/exec_plans/active/` para planos em execução e mova-os para
+  `docs/exec_plans/completed/` após a conclusão.
 
 ### Testes
 
@@ -137,9 +137,9 @@ projeto/
 
 - O Garbage Collector identifica candidatos à revisão, atualiza o inventário e
   gera relatórios.
-- Regras de varredura ficam em `docs/garbage-collector/rules/`.
-- Exceções ativas ficam em `docs/garbage-collector/exceptions/`.
-- Relatórios ficam em `docs/garbage-collector/reports/`.
+- Regras de varredura ficam em `docs/garbage_collector/rules/`.
+- Exceções ativas ficam em `docs/garbage_collector/exceptions/`.
+- Relatórios ficam em `docs/garbage_collector/reports/`.
 
 ## Critérios de aceitação
 
