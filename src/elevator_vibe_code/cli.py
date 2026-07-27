@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from math import isfinite
+from time import sleep
 from typing import TYPE_CHECKING, Protocol, TextIO
 
 if TYPE_CHECKING:
@@ -35,8 +37,8 @@ class _Elevator(Protocol):
     def start_round(self, service_round: ServiceRound) -> None:
         """Inicia uma rodada de atendimento."""
 
-    def run_until_idle(self) -> tuple[ElevatorEvent, ...]:
-        """Executa a rodada até o elevador ficar ocioso."""
+    def step(self) -> tuple[ElevatorEvent, ...]:
+        """Executa o próximo passo da rodada."""
 
     def snapshot(self) -> ElevatorSnapshot:
         """Retorna o estado observável do elevador."""
@@ -68,11 +70,34 @@ def _positive_int(value: str) -> int:
     return rounds
 
 
+def _non_negative_float(value: str) -> float:
+    try:
+        delay = float(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(
+            f"delay entre steps inválido: {value}. "
+            "Esperado um número finito maior ou igual a zero."
+        ) from error
+
+    if not isfinite(delay) or delay < 0:
+        raise argparse.ArgumentTypeError(
+            f"delay entre steps inválido: {value}. "
+            "Esperado um número finito maior ou igual a zero."
+        )
+    return delay
+
+
 def _create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="elevator_vibe_code")
     commands = parser.add_subparsers(dest="command", required=True)
     demo_parser = commands.add_parser("demo")
     demo_parser.add_argument("--rounds", type=_positive_int, default=1)
+    demo_parser.add_argument(
+        "--step-delay",
+        type=_non_negative_float,
+        default=2.0,
+        metavar="SEGUNDOS",
+    )
     return parser
 
 
@@ -125,11 +150,32 @@ def _format_summary(
     )
 
 
+def _run_steps_until_idle(
+    elevator: _Elevator,
+    *,
+    step_delay: float,
+    sleeper: Callable[[float], None],
+    stream: TextIO,
+) -> ElevatorSnapshot:
+    while True:
+        for event in elevator.step():
+            print(format_event(event), file=stream)
+
+        snapshot = elevator.snapshot()
+        if snapshot.is_idle:
+            return snapshot
+
+        stream.flush()
+        if step_delay > 0:
+            sleeper(step_delay)
+
+
 def main(
     argv: Sequence[str] | None = None,
     *,
     generator: RoundGenerator | None = None,
     output: TextIO | None = None,
+    sleeper: Callable[[float], None] = sleep,
 ) -> int:
     """Executa a demonstração solicitada pela linha de comando."""
     arguments = _create_parser().parse_args(argv)
@@ -152,9 +198,12 @@ def main(
         )
         initial_snapshot = elevator.snapshot()
         elevator.start_round(service_round)
-        for event in elevator.run_until_idle():
-            print(format_event(event), file=stream)
-        final_snapshot = elevator.snapshot()
+        final_snapshot = _run_steps_until_idle(
+            elevator,
+            step_delay=arguments.step_delay,
+            sleeper=sleeper,
+            stream=stream,
+        )
         print(
             _format_summary(initial_snapshot, final_snapshot, service_round),
             file=stream,
