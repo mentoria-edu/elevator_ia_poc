@@ -44,7 +44,9 @@
 
 - O elevador leva um segundo para percorrer a distância entre dois andares consecutivos.
 - Portanto, um deslocamento de três andares leva três segundos.
-- O tempo de abertura e fechamento das portas ainda não faz parte da regra de deslocamento.
+- A abertura da porta leva um segundo.
+- O fechamento da porta leva um segundo.
+- O embarque e o desembarque não acrescentam tempo ao atendimento.
 
 ## 8. Limites de operação
 
