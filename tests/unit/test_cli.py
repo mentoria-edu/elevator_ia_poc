@@ -1,5 +1,6 @@
 """Testes unitários da apresentação da CLI do elevador."""
 
+import runpy
 from io import StringIO
 from unittest.mock import Mock, call, patch
 
@@ -239,3 +240,43 @@ def test_demo_executes_three_rounds_on_the_same_elevator() -> None:
         "Resumo: Andar final 12 | Tempo 00:13 | Atendidos 3 | "
         "Filas: subida 0, descida 0",
     ]
+
+
+def test_demo_uses_default_generator_factory() -> None:
+    generator = Mock()
+    generator.generate_round.return_value = make_service_round()
+    elevator = Mock()
+    elevator.run_until_idle.return_value = ()
+    elevator.snapshot.side_effect = (
+        make_snapshot(0, 0),
+        make_snapshot(4, 12),
+    )
+
+    with (
+        patch(
+            "elevator_vibe_code.cli._create_generator",
+            return_value=generator,
+        ) as create_generator,
+        patch(
+            "elevator_vibe_code.cli._create_elevator",
+            return_value=elevator,
+        ),
+    ):
+        result = main(["demo"], output=StringIO())
+
+    assert result == 0
+    create_generator.assert_called_once_with()
+
+
+def test_package_entry_point_delegates_to_main() -> None:
+    with (
+        patch("elevator_vibe_code.cli.main", return_value=7) as mocked_main,
+        pytest.raises(SystemExit) as error,
+    ):
+        runpy.run_module(
+            "elevator_vibe_code.__main__",
+            run_name="__main__",
+        )
+
+    mocked_main.assert_called_once_with()
+    assert error.value.code == 7

@@ -135,9 +135,11 @@ def main(
 ) -> int:
     """Executa a demonstração solicitada pela linha de comando."""
     arguments = _create_parser().parse_args(argv)
-    round_generator = generator or _create_generator()
+    round_generator = (
+        generator if generator is not None else _create_generator()
+    )
     elevator = _create_elevator()
-    stream = output or sys.stdout
+    stream = output if output is not None else sys.stdout
 
     for round_number in range(1, arguments.rounds + 1):
         service_round = round_generator.generate_round()

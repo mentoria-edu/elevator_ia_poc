@@ -17,8 +17,8 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
 - [x] (2026-07-27 00:56Z) Implementada e testada a formatação dos oito tipos de evento.
 - [x] (2026-07-27 01:12Z) Implementados e testados argumentos e uma rodada isolada.
 - [x] (2026-07-27 01:25Z) Implementadas e testadas três rodadas sucessivas com resumos relativos.
-- [ ] Expor o ponto de entrada do pacote e executar todas as validações.
-- [ ] Arquivar este plano em `docs/exec_plans/completed/implementar_cli_elevador.md`.
+- [x] (2026-07-27 01:35Z) Exposto e testado o ponto de entrada; executadas todas as validações disponíveis.
+- [x] (2026-07-27 01:35Z) Arquivado este plano em `docs/exec_plans/completed/implementar_cli_elevador.md`.
 
 ## Surpresas e Descobertas
 
@@ -30,6 +30,9 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
 
 - Observação: `Mock(name=...)` define o nome interno do mock, não o atributo de domínio `.name`.
   Evidência: os testes de passageiros passaram depois que `passenger.name` foi configurado explicitamente; 13 testes da CLI estão aprovados.
+
+- Observação: a suíte completa exige uma versão mais nova do Python do que a disponível no ambiente.
+  Evidência: `python3 -m pytest` usou Python 3.10.12 e interrompeu a coleta de quatro módulos do Garbage Collector porque `enum.StrEnum` não existe nessa versão; o projeto exige Python 3.14.5 ou superior.
 
 ## Registro de Decisões
 
@@ -43,7 +46,7 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
 
 ## Resultados e Retrospectiva
 
-A implementação ainda não começou. Ao final, esta seção registrará os comportamentos entregues, as validações executadas e a dependência restante para executar o comando real.
+Foram entregues a formatação dos oito eventos, o comando `demo`, a validação de `--rounds`, rodadas sucessivas na mesma instância, chamadas, eventos, resumos e o ponto de entrada do pacote. Os 16 testes isolados da CLI passaram com Python 3.10.12, assim como a compilação dos módulos e o validador de ExecPlans. A execução de Ruff, mypy e da suíte completa permanece bloqueada pela ausência de `uv`, Ruff, mypy e Python 3.14.5 no ambiente. A demonstração real continuará dependendo das implementações de modelos, geração e motor, conforme previsto pela divisão independente.
 
 ## Contexto e Orientação
 
