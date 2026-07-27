@@ -265,15 +265,12 @@ def test_demo_uses_default_generator_factory() -> None:
     create_generator.assert_called_once_with()
 
 
-def test_package_entry_point_delegates_to_main() -> None:
+def test_package_entry_point_delegates_without_name_guard() -> None:
     with (
         patch("elevator_vibe_code.cli.main", return_value=7) as mocked_main,
         pytest.raises(SystemExit) as error,
     ):
-        runpy.run_module(
-            "elevator_vibe_code.__main__",
-            run_name="__main__",
-        )
+        runpy.run_module("elevator_vibe_code.__main__")
 
     mocked_main.assert_called_once_with()
     assert error.value.code == 7

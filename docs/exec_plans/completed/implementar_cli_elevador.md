@@ -35,7 +35,7 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
   Evidência: `python3 -m pytest` usou Python 3.10.12 e interrompeu a coleta de quatro módulos do Garbage Collector porque `enum.StrEnum` não existe nessa versão; o projeto exige Python 3.14.5 ou superior.
 
 - Observação: instalar `uv` tornou acessível o Python 3.14.5 já provisionado e resolveu os bloqueios de validação.
-  Evidência: as cinco validações obrigatórias retornaram código zero; a suíte completa aprovou 60 testes com 92% de cobertura.
+  Evidência: as cinco validações obrigatórias retornaram código zero; a suíte completa aprovou 60 testes com 91% de cobertura após a simplificação final.
 
 ## Registro de Decisões
 
@@ -47,9 +47,13 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
   Justificativa: os mocks observam as interações da camada de apresentação sem reproduzir regras do motor.
   Data/Autor: 2026-07-27 / Codex.
 
+- Decisão: executar `main()` diretamente no módulo `__main__.py`, sem o guard de `__name__`.
+  Justificativa: esse módulo existe exclusivamente como ponto de entrada e não faz parte da API importável; o teste canônico comprova a delegação direta e a propagação do código de saída.
+  Data/Autor: 2026-07-27 / Codex.
+
 ## Resultados e Retrospectiva
 
-Foram entregues a formatação dos oito eventos, o comando `demo`, a validação de `--rounds`, rodadas sucessivas na mesma instância, chamadas, eventos, resumos e o ponto de entrada do pacote. Ruff, Ruff Format, mypy, o validador de ExecPlans e a suíte completa passaram com Python 3.14.5. A suíte aprovou 60 testes e registrou 92% de cobertura. A demonstração real continuará dependendo das implementações de modelos, geração e motor, conforme previsto pela divisão independente.
+Foram entregues a formatação dos oito eventos, o comando `demo`, a validação de `--rounds`, rodadas sucessivas na mesma instância, chamadas, eventos, resumos e o ponto de entrada direto do pacote. Ruff, Ruff Format, mypy, o validador de ExecPlans e a suíte completa passaram com Python 3.14.5. A suíte aprovou 60 testes e registrou 91% de cobertura. A demonstração real continuará dependendo das implementações de modelos, geração e motor, conforme previsto pela divisão independente.
 
 ## Contexto e Orientação
 
