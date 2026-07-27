@@ -3,6 +3,7 @@ name = "elevator-vibe-code"
 version = "0.1.0"
 requires-python = ">=3.14.5"
 dependencies = [
+    "faker==40.32.0",
     "pyyaml==6.0.3",
 ]
 
