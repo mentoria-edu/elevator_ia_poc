@@ -21,18 +21,25 @@ geradas.
 - [x] (2026-07-27 21:01Z) Confirmado que `dev` e `origin/dev` apontavam para
   `2d516cc` e criada a branch `feat/modelos_geracao_elevador`.
 - [x] (2026-07-27 21:01Z) Registrado este ExecPlan na pasta de planos ativos.
-- [ ] Implementar e testar os modelos imutáveis do domínio.
-- [ ] Adicionar Faker 40.32.0 e implementar a geração de rodadas.
-- [ ] Executar todas as validações do repositório.
-- [ ] Registrar os resultados e mover este plano para `completed/`.
+- [x] (2026-07-27 21:07Z) Implementados e testados os modelos imutáveis do
+  domínio; os 26 testes do módulo foram aprovados.
+- [x] (2026-07-27 21:12Z) Adicionado Faker 40.32.0 e implementada a geração de
+  rodadas; os 5 testes do módulo foram aprovados.
+- [x] (2026-07-27 21:15Z) Executadas as validações integrais; 75 testes foram
+  aprovados com o fallback de captura documentado.
+- [x] (2026-07-27 21:15Z) Registrados os resultados e movido este plano para
+  `completed/`.
 
 ## Surpresas e Descobertas
 
 - Observação: a execução comum do Pytest no ambiente desta tarefa falhou ao
   encerrar a captura por arquivo com `FileNotFoundError`, embora a coleta e os
   testes estejam íntegros.
-  Evidência: a linha de base aprovou os 44 testes existentes com
-  `uv run --group dev pytest --capture=sys`.
+  Evidência: o comando padrão reproduziu a falha depois da implementação, e
+  `uv run --group dev pytest --capture=sys` aprovou os 75 testes.
+
+- Observação: a adição de Faker 40.32.0 incluiu `tzdata` 2026.3 no lockfile.
+  Evidência: `uv lock` informou os dois pacotes adicionados.
 
 ## Registro de Decisões
 
@@ -53,8 +60,17 @@ geradas.
 
 ## Resultados e Retrospectiva
 
-A implementação ainda está em andamento. Esta seção será atualizada depois
-dos modelos, da geração e das validações.
+Os modelos imutáveis, seus invariantes e a geração de rodadas com Faker em
+`pt_BR` foram implementados sem incluir motor ou CLI. A suíte final reuniu 75
+testes aprovados e obteve 100% de cobertura em `models.py`, 94% em
+`generation.py` e 98% no pacote da aplicação. Ruff, o formatador, Mypy, o
+lockfile, o validador de ExecPlans e `git diff --check` também foram aprovados.
+
+O único bloqueio observado foi externo ao código: o modo padrão de captura do
+Pytest perdeu seu arquivo temporário neste ambiente. A alternativa
+`--capture=sys` validou toda a suíte. O documento temporário de organização
+permaneceu não rastreado e nenhum arquivo pertencente ao motor, à CLI ou às
+regras de negócio foi alterado.
 
 ## Contexto e Orientação
 
