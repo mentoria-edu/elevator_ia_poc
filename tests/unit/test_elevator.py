@@ -1,6 +1,8 @@
 """Testes unitários do motor do elevador."""
 
 import pytest
+
+from elevator_vibe_code.elevator import Elevator
 from elevator_vibe_code.models import (
     Direction,
     ElevatorCall,
@@ -10,8 +12,6 @@ from elevator_vibe_code.models import (
     Passenger,
     ServiceRound,
 )
-
-from elevator_vibe_code.elevator import Elevator
 
 
 def make_passenger(

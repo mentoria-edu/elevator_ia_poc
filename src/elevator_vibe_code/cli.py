@@ -1,7 +1,5 @@
 """Interface de linha de comando para acompanhar o elevador."""
 
-# mypy: disable-error-code="import-not-found,import-untyped"
-
 from __future__ import annotations
 
 import argparse

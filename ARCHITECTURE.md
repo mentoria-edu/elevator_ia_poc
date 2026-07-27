@@ -2,7 +2,14 @@
 
 ## Módulos
 
-- `src/elevator_vibe_code/`: implementação da aplicação e regras de domínio.
+- `src/elevator_vibe_code/models.py`: valores imutáveis e invariantes do
+  domínio.
+- `src/elevator_vibe_code/generation.py`: criação de rodadas válidas por meio
+  do contrato `RoundGenerator`.
+- `src/elevator_vibe_code/elevator.py`: motor determinístico de atendimento e
+  produção de eventos.
+- `src/elevator_vibe_code/cli.py`: orquestração e apresentação da demonstração
+  em linha de comando.
 - `tests/unit/`: testes do comportamento da aplicação.
 - `tools/`: ferramentas determinísticas de manutenção do repositório.
 - `docs/`: documentação operacional, padrões e regras de negócio.
@@ -24,8 +31,15 @@ ler documentação e metadados do repositório, mas não devem conter regras de
 negócio. Integrações externas devem ser encapsuladas no pacote da aplicação
 quando uma funcionalidade concreta as exigir.
 
-## Estado Inicial
+## Composição da Aplicação
 
-Ainda não há módulos de domínio. Adicione-os em `src/elevator_vibe_code/`
-somente junto com uma responsabilidade definida, documentação relevante e
-testes unitários.
+A CLI solicita uma rodada ao gerador, entrega os modelos validados ao motor e
+formata os eventos e snapshots devolvidos pelo atendimento. Os módulos se
+comunicam somente pelos contratos públicos de `models.py` e
+`generation.py`; regras operacionais permanecem no motor e regras de
+apresentação permanecem na CLI.
+
+Uma alteração que atravesse essas responsabilidades deve manter testes
+isolados de cada módulo e ao menos um teste determinístico de composição. O
+teste de composição usa as implementações reais, não acessa rede ou serviços
+externos e comprova que os contratos continuam compatíveis.

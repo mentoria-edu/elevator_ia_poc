@@ -31,6 +31,17 @@ Os testes devem ser:
   teste.
 - Testes unitários não devem depender de rede, banco real ou arquivos externos.
 
+## Composição entre módulos
+
+- Funcionalidades divididas entre módulos devem possuir ao menos um teste
+  determinístico que componha as implementações reais.
+- Fakes nomeados e tipados devem substituir dependências somente quando o
+  objetivo do teste for observar um módulo isoladamente.
+- Não use mocks estruturais como substitutos de modelos do domínio; instancie
+  os modelos reais para que invariantes e tipos também sejam exercitados.
+- Testes de composição continuam sem rede, banco de dados ou serviços
+  externos.
+
 ## Organização
 
 ```text
@@ -51,4 +62,6 @@ Todos os testes devem ser executáveis com um único comando:
 uv run --group dev pytest
 ```
 
-O comando deve ser executado antes de concluir uma alteração.
+O Pytest usa captura por `sys` definida em `pyproject.toml` para manter esse
+comando estável nos ambientes suportados. Avisos permanecem visíveis. O
+comando deve ser executado antes de concluir uma alteração.

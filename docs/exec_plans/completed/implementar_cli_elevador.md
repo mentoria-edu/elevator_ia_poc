@@ -124,3 +124,15 @@ Em `src/elevator_vibe_code/cli.py`, expor:
         ...
 
 O módulo usará somente a biblioteca padrão. `_create_generator()` importará `FakerPassengerGenerator` dentro da função, e `_create_elevator()` importará `Elevator` dentro da função. Essas fábricas serão privadas e não alterarão o contrato público.
+
+## Integração posterior
+
+Nota de alteração (2026-07-27): depois desta entrega independente, foi
+executado um novo workflow de integração documentado pelo ExecPlan
+`integrar_componentes_elevador.md`, arquivado em
+`docs/exec_plans/completed/integrar_componentes_elevador.md`. Esse workflow
+substituiu os mocks estruturais de dados por modelos reais e fakes tipados,
+removeu a supressão temporária de imports do Mypy e comprovou a CLI junto com
+geração e motor reais em duas rodadas determinísticas. O registro acima
+permanece como evidência histórica das restrições existentes na branch
+independente.

@@ -1,52 +1,80 @@
-"""Testes unitários da apresentação da CLI do elevador."""
+"""Testes unitários e de composição da CLI do elevador."""
 
 import runpy
+from collections.abc import Iterator
 from io import StringIO
-from unittest.mock import Mock, call, patch
+from unittest.mock import patch
 
 import pytest
+from faker import Faker
 
 from elevator_vibe_code.cli import format_event, main
+from elevator_vibe_code.elevator import Elevator
+from elevator_vibe_code.generation import FakerPassengerGenerator
+from elevator_vibe_code.models import (
+    Direction,
+    ElevatorCall,
+    ElevatorEvent,
+    ElevatorSnapshot,
+    EventKind,
+    Floor,
+    Passenger,
+    ServiceRound,
+)
 
 
-def make_passenger(name: str) -> Mock:
-    """Cria um mock de passageiro com nome observável."""
-    passenger = Mock()
-    passenger.name = name
-    return passenger
+def make_passenger(
+    passenger_id: str,
+    name: str,
+    origin: int,
+    destination: int,
+) -> Passenger:
+    """Cria um passageiro válido e identificável."""
+    direction = Direction.UP if destination > origin else Direction.DOWN
+    return Passenger(
+        passenger_id=passenger_id,
+        name=name,
+        origin=Floor(origin),
+        destination=Floor(destination),
+        direction=direction,
+    )
 
 
 def make_event(
-    kind: str,
+    kind: EventKind,
     *,
     elapsed_seconds: int = 3,
     floor_number: int = 2,
-    direction: str = "SUBINDO",
+    direction: Direction = Direction.UP,
     passenger_names: tuple[str, ...] = (),
-) -> Mock:
-    """Cria um mock de evento com os atributos consumidos pela CLI."""
-    return Mock(
+) -> ElevatorEvent:
+    """Cria um evento real com os dados observados pela CLI."""
+    passengers = tuple(
+        make_passenger(f"event-{index}", name, 0, 2)
+        for index, name in enumerate(passenger_names)
+    )
+    return ElevatorEvent(
         elapsed_seconds=elapsed_seconds,
-        floor=Mock(number=floor_number),
-        direction=Mock(value=direction),
-        kind=Mock(value=kind),
-        passengers=tuple(make_passenger(name) for name in passenger_names),
+        floor=Floor(floor_number),
+        direction=direction,
+        kind=kind,
+        passengers=passengers,
     )
 
 
 @pytest.mark.parametrize(
     ("kind", "description"),
     [
-        ("floor_passed", "Passando"),
-        ("arrival", "Chegada"),
-        ("door_opening", "Porta abrindo"),
-        ("door_closing", "Porta fechando"),
-        ("direction_changed", "Direção alterada"),
-        ("idle", "Elevador parado"),
+        (EventKind.FLOOR_PASSED, "Passando"),
+        (EventKind.ARRIVAL, "Chegada"),
+        (EventKind.DOOR_OPENING, "Porta abrindo"),
+        (EventKind.DOOR_CLOSING, "Porta fechando"),
+        (EventKind.DIRECTION_CHANGED, "Direção alterada"),
+        (EventKind.IDLE, "Elevador parado"),
     ],
 )
 def test_format_event_describes_operational_event(
-    kind: str,
+    kind: EventKind,
     description: str,
 ) -> None:
     event = make_event(kind)
@@ -59,12 +87,12 @@ def test_format_event_describes_operational_event(
 @pytest.mark.parametrize(
     ("kind", "description"),
     [
-        ("passengers_exited", "Saíram"),
-        ("passengers_entered", "Entraram"),
+        (EventKind.PASSENGERS_EXITED, "Saíram"),
+        (EventKind.PASSENGERS_ENTERED, "Entraram"),
     ],
 )
 def test_format_event_preserves_passenger_order(
-    kind: str,
+    kind: EventKind,
     description: str,
 ) -> None:
     event = make_event(
@@ -82,10 +110,10 @@ def test_format_event_preserves_passenger_order(
 
 def test_format_event_formats_minutes_floor_and_direction() -> None:
     event = make_event(
-        "floor_passed",
+        EventKind.FLOOR_PASSED,
         elapsed_seconds=125,
         floor_number=17,
-        direction="DESCENDO",
+        direction=Direction.DOWN,
     )
 
     result = format_event(event)
@@ -93,24 +121,24 @@ def test_format_event_formats_minutes_floor_and_direction() -> None:
     assert result == "[02:05] Andar 17 | DESCENDO | Passando"
 
 
-def make_call(
-    floor_number: int,
-    direction: str,
-    passenger_names: tuple[str, ...],
-) -> Mock:
-    """Cria um mock de chamada exibível pela CLI."""
-    return Mock(
-        floor=Mock(number=floor_number),
-        direction=Mock(value=direction),
-        passengers=tuple(make_passenger(name) for name in passenger_names),
+def make_service_round() -> ServiceRound:
+    """Cria uma rodada real e determinística para os testes da CLI."""
+    upward_passengers = (
+        make_passenger("up-1", "Ana Souza", 0, 4),
+        make_passenger("up-2", "Carlos Lima", 0, 8),
     )
-
-
-def make_service_round() -> Mock:
-    """Cria uma rodada com chamadas determinísticas."""
-    return Mock(
-        upward_call=make_call(0, "SUBINDO", ("Ana Souza", "Carlos Lima")),
-        downward_call=make_call(12, "DESCENDO", ("Maria Alves",)),
+    downward_passengers = (make_passenger("down-1", "Maria Alves", 12, 0),)
+    return ServiceRound(
+        upward_call=ElevatorCall(
+            floor=Floor(0),
+            direction=Direction.UP,
+            passengers=upward_passengers,
+        ),
+        downward_call=ElevatorCall(
+            floor=Floor(12),
+            direction=Direction.DOWN,
+            passengers=downward_passengers,
+        ),
     )
 
 
@@ -118,28 +146,72 @@ def make_snapshot(
     elapsed_seconds: int,
     floor_number: int,
     *,
-    upward_waiting: tuple[Mock, ...] = (),
-    downward_waiting: tuple[Mock, ...] = (),
-) -> Mock:
-    """Cria um snapshot com os dados usados no resumo."""
-    return Mock(
-        elapsed_seconds=elapsed_seconds,
-        current_floor=Mock(number=floor_number),
+    upward_waiting: tuple[Passenger, ...] = (),
+    downward_waiting: tuple[Passenger, ...] = (),
+) -> ElevatorSnapshot:
+    """Cria um snapshot real com os dados usados no resumo."""
+    return ElevatorSnapshot(
+        current_floor=Floor(floor_number),
+        direction=Direction.IDLE,
+        cabin=(),
         upward_waiting=upward_waiting,
         downward_waiting=downward_waiting,
+        elapsed_seconds=elapsed_seconds,
+        is_idle=True,
     )
+
+
+class FakeRoundGenerator:
+    """Entrega rodadas configuradas e registra quantas foram solicitadas."""
+
+    def __init__(self, rounds: tuple[ServiceRound, ...]) -> None:
+        self._rounds: Iterator[ServiceRound] = iter(rounds)
+        self.generate_count = 0
+
+    def generate_round(self) -> ServiceRound:
+        """Retorna a próxima rodada configurada."""
+        self.generate_count += 1
+        return next(self._rounds)
+
+
+class FakeElevator:
+    """Registra a orquestração da CLI sem reproduzir regras do motor."""
+
+    def __init__(
+        self,
+        snapshots: tuple[ElevatorSnapshot, ...],
+        event_batches: tuple[tuple[ElevatorEvent, ...], ...],
+    ) -> None:
+        self._snapshots: Iterator[ElevatorSnapshot] = iter(snapshots)
+        self._event_batches: Iterator[tuple[ElevatorEvent, ...]] = iter(
+            event_batches
+        )
+        self.actions: list[str] = []
+        self.started_rounds: list[ServiceRound] = []
+
+    def snapshot(self) -> ElevatorSnapshot:
+        """Retorna o próximo snapshot configurado."""
+        self.actions.append("snapshot")
+        return next(self._snapshots)
+
+    def start_round(self, service_round: ServiceRound) -> None:
+        """Registra a rodada recebida."""
+        self.actions.append("start_round")
+        self.started_rounds.append(service_round)
+
+    def run_until_idle(self) -> tuple[ElevatorEvent, ...]:
+        """Retorna o próximo lote de eventos configurado."""
+        self.actions.append("run_until_idle")
+        return next(self._event_batches)
 
 
 def test_demo_executes_one_round_by_default() -> None:
     service_round = make_service_round()
-    event = make_event("arrival")
-    generator = Mock()
-    generator.generate_round.return_value = service_round
-    elevator = Mock()
-    elevator.run_until_idle.return_value = (event,)
-    elevator.snapshot.side_effect = (
-        make_snapshot(0, 0),
-        make_snapshot(7, 12),
+    event = make_event(EventKind.ARRIVAL)
+    generator = FakeRoundGenerator((service_round,))
+    elevator = FakeElevator(
+        (make_snapshot(0, 0), make_snapshot(7, 12)),
+        ((event,),),
     )
     output = StringIO()
 
@@ -151,9 +223,14 @@ def test_demo_executes_one_round_by_default() -> None:
 
     assert result == 0
     create_elevator.assert_called_once_with()
-    generator.generate_round.assert_called_once_with()
-    elevator.start_round.assert_called_once_with(service_round)
-    elevator.run_until_idle.assert_called_once_with()
+    assert generator.generate_count == 1
+    assert elevator.started_rounds == [service_round]
+    assert elevator.actions == [
+        "snapshot",
+        "start_round",
+        "run_until_idle",
+        "snapshot",
+    ]
     assert output.getvalue().splitlines() == [
         "Rodada 1",
         "Chamada de subida: Andar 00 | SUBINDO | "
@@ -168,7 +245,11 @@ def test_demo_executes_one_round_by_default() -> None:
 @pytest.mark.parametrize("rounds", ["0", "-1", "texto"])
 def test_demo_rejects_invalid_round_count(rounds: str) -> None:
     with pytest.raises(SystemExit) as error:
-        main(["demo", "--rounds", rounds], generator=Mock(), output=StringIO())
+        main(
+            ["demo", "--rounds", rounds],
+            generator=FakeRoundGenerator(()),
+            output=StringIO(),
+        )
 
     assert error.value.code == 2
 
@@ -180,23 +261,24 @@ def test_demo_executes_three_rounds_on_the_same_elevator() -> None:
         make_service_round(),
     )
     events = tuple(
-        make_event("idle", elapsed_seconds=index) for index in range(3)
+        make_event(
+            EventKind.IDLE,
+            elapsed_seconds=index,
+            direction=Direction.IDLE,
+        )
+        for index in range(3)
     )
-    generator = Mock()
-    generator.generate_round.side_effect = rounds
-    elevator = Mock()
-    elevator.run_until_idle.side_effect = (
-        (events[0],),
-        (events[1],),
-        (events[2],),
-    )
-    elevator.snapshot.side_effect = (
-        make_snapshot(0, 0),
-        make_snapshot(10, 12),
-        make_snapshot(10, 12),
-        make_snapshot(18, 0),
-        make_snapshot(18, 0),
-        make_snapshot(31, 12),
+    generator = FakeRoundGenerator(rounds)
+    elevator = FakeElevator(
+        (
+            make_snapshot(0, 0),
+            make_snapshot(10, 12),
+            make_snapshot(10, 12),
+            make_snapshot(18, 0),
+            make_snapshot(18, 0),
+            make_snapshot(31, 12),
+        ),
+        ((events[0],), (events[1],), (events[2],)),
     )
     output = StringIO()
 
@@ -205,26 +287,29 @@ def test_demo_executes_three_rounds_on_the_same_elevator() -> None:
         return_value=elevator,
     ) as create_elevator:
         result = main(
-            ["demo", "--rounds", "3"], generator=generator, output=output
+            ["demo", "--rounds", "3"],
+            generator=generator,
+            output=output,
         )
 
     assert result == 0
     create_elevator.assert_called_once_with()
-    assert generator.generate_round.call_count == 3
-    elevator.assert_has_calls([
-        call.snapshot(),
-        call.start_round(rounds[0]),
-        call.run_until_idle(),
-        call.snapshot(),
-        call.snapshot(),
-        call.start_round(rounds[1]),
-        call.run_until_idle(),
-        call.snapshot(),
-        call.snapshot(),
-        call.start_round(rounds[2]),
-        call.run_until_idle(),
-        call.snapshot(),
-    ])
+    assert generator.generate_count == 3
+    assert elevator.started_rounds == list(rounds)
+    assert elevator.actions == [
+        "snapshot",
+        "start_round",
+        "run_until_idle",
+        "snapshot",
+        "snapshot",
+        "start_round",
+        "run_until_idle",
+        "snapshot",
+        "snapshot",
+        "start_round",
+        "run_until_idle",
+        "snapshot",
+    ]
     lines = output.getvalue().splitlines()
     round_headers = [line for line in lines if line.startswith("Rodada ")]
     assert round_headers == ["Rodada 1", "Rodada 2", "Rodada 3"]
@@ -240,13 +325,11 @@ def test_demo_executes_three_rounds_on_the_same_elevator() -> None:
 
 
 def test_demo_uses_default_generator_factory() -> None:
-    generator = Mock()
-    generator.generate_round.return_value = make_service_round()
-    elevator = Mock()
-    elevator.run_until_idle.return_value = ()
-    elevator.snapshot.side_effect = (
-        make_snapshot(0, 0),
-        make_snapshot(4, 12),
+    service_round = make_service_round()
+    generator = FakeRoundGenerator((service_round,))
+    elevator = FakeElevator(
+        (make_snapshot(0, 0), make_snapshot(4, 12)),
+        ((),),
     )
 
     with (
@@ -263,6 +346,44 @@ def test_demo_uses_default_generator_factory() -> None:
 
     assert result == 0
     create_generator.assert_called_once_with()
+
+
+def test_demo_composes_seeded_generation_models_engine_and_cli() -> None:
+    faker_instance = Faker("pt_BR")
+    faker_instance.seed_instance(20260727)
+    generator = FakerPassengerGenerator(faker_instance)
+    elevator = Elevator()
+    output = StringIO()
+
+    with patch(
+        "elevator_vibe_code.cli._create_elevator",
+        return_value=elevator,
+    ):
+        result = main(
+            ["demo", "--rounds", "2"],
+            generator=generator,
+            output=output,
+        )
+
+    snapshot = elevator.snapshot()
+    lines = output.getvalue().splitlines()
+    summaries = [line for line in lines if line.startswith("Resumo: ")]
+
+    assert result == 0
+    assert [line for line in lines if line.startswith("Rodada ")] == [
+        "Rodada 1",
+        "Rodada 2",
+    ]
+    assert len(summaries) == 2
+    assert all(
+        summary.endswith("Filas: subida 0, descida 0") for summary in summaries
+    )
+    assert any(" | Entraram: " in line for line in lines)
+    assert any(" | Saíram: " in line for line in lines)
+    assert snapshot.is_idle
+    assert snapshot.cabin == ()
+    assert snapshot.upward_waiting == ()
+    assert snapshot.downward_waiting == ()
 
 
 def test_package_entry_point_delegates_without_name_guard() -> None:

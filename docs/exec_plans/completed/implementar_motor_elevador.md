@@ -179,3 +179,14 @@ contratos de `elevator_vibe_code.models`.
 Nota de alteração (2026-07-27): criado para executar a entrega independente
 do motor do elevador na branch solicitada e atualizado ao final com as
 evidências e o bloqueio esperado de integração dos modelos.
+
+## Integração posterior
+
+Nota de alteração (2026-07-27): depois desta entrega independente, foi
+executado um novo workflow de integração documentado pelo ExecPlan
+`integrar_componentes_elevador.md`, arquivado em
+`docs/exec_plans/completed/integrar_componentes_elevador.md`. A presença dos
+modelos eliminou os bloqueios temporários de import do motor; Mypy estrito, a
+suíte completa e um cenário real de geração, motor e CLI passaram em conjunto.
+O registro acima permanece como evidência histórica das restrições existentes
+na branch independente.

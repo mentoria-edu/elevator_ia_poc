@@ -175,3 +175,14 @@ o único artefato de processo adicional.
 
 Faker 40.32.0 é a única dependência nova e fica encapsulada no módulo de
 geração.
+
+## Integração posterior
+
+Nota de alteração (2026-07-27): depois desta entrega independente, foi
+executado um novo workflow de integração documentado pelo ExecPlan
+`integrar_componentes_elevador.md`, arquivado em
+`docs/exec_plans/completed/integrar_componentes_elevador.md`. O workflow
+sincronizou Faker 40.32.0 pelo lockfile, tornou `--capture=sys` parte do
+comando padrão do Pytest e comprovou o gerador semeado com modelos, motor e CLI
+reais. O registro acima permanece como evidência histórica das restrições
+existentes na branch independente.

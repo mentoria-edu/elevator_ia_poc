@@ -15,19 +15,25 @@ uv python install 3.14.5
 Para instalar somente o projeto e suas dependências de produção, execute:
 
 ```bash
-uv sync
+uv sync --locked
 ```
 
 Para desenvolver, sincronize também o grupo local de ferramentas e execute as
 validações:
 
 ```bash
-uv sync --group dev
+uv sync --locked --group dev
 uv run --group dev ruff check .
 uv run --group dev ruff format --check .
 uv run --group dev mypy
 uv run --group dev pytest
 uv run python -m tools.validators.check_exec_plans
+```
+
+Para comprovar a integração entre geração, modelos, motor e CLI, execute:
+
+```bash
+uv run python -m elevator_vibe_code demo --rounds 2
 ```
 
 O pacote principal fica em `src/elevator_vibe_code/`. Consulte
