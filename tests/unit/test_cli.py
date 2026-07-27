@@ -158,8 +158,7 @@ def test_demo_executes_one_round_by_default() -> None:
         "Rodada 1",
         "Chamada de subida: Andar 00 | SUBINDO | "
         "Passageiros: Ana Souza, Carlos Lima",
-        "Chamada de descida: Andar 12 | DESCENDO | "
-        "Passageiros: Maria Alves",
+        "Chamada de descida: Andar 12 | DESCENDO | Passageiros: Maria Alves",
         "[00:03] Andar 02 | SUBINDO | Chegada",
         "Resumo: Andar final 12 | Tempo 00:07 | Atendidos 3 | "
         "Filas: subida 0, descida 0",
@@ -212,22 +211,20 @@ def test_demo_executes_three_rounds_on_the_same_elevator() -> None:
     assert result == 0
     create_elevator.assert_called_once_with()
     assert generator.generate_round.call_count == 3
-    elevator.assert_has_calls(
-        [
-            call.snapshot(),
-            call.start_round(rounds[0]),
-            call.run_until_idle(),
-            call.snapshot(),
-            call.snapshot(),
-            call.start_round(rounds[1]),
-            call.run_until_idle(),
-            call.snapshot(),
-            call.snapshot(),
-            call.start_round(rounds[2]),
-            call.run_until_idle(),
-            call.snapshot(),
-        ]
-    )
+    elevator.assert_has_calls([
+        call.snapshot(),
+        call.start_round(rounds[0]),
+        call.run_until_idle(),
+        call.snapshot(),
+        call.snapshot(),
+        call.start_round(rounds[1]),
+        call.run_until_idle(),
+        call.snapshot(),
+        call.snapshot(),
+        call.start_round(rounds[2]),
+        call.run_until_idle(),
+        call.snapshot(),
+    ])
     lines = output.getvalue().splitlines()
     round_headers = [line for line in lines if line.startswith("Rodada ")]
     assert round_headers == ["Rodada 1", "Rodada 2", "Rodada 3"]

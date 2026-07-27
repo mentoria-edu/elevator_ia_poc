@@ -17,7 +17,7 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
 - [x] (2026-07-27 00:56Z) Implementada e testada a formatação dos oito tipos de evento.
 - [x] (2026-07-27 01:12Z) Implementados e testados argumentos e uma rodada isolada.
 - [x] (2026-07-27 01:25Z) Implementadas e testadas três rodadas sucessivas com resumos relativos.
-- [x] (2026-07-27 01:35Z) Exposto e testado o ponto de entrada; executadas todas as validações disponíveis.
+- [x] (2026-07-27 02:05Z) Exposto e testado o ponto de entrada; executadas todas as validações obrigatórias.
 - [x] (2026-07-27 01:35Z) Arquivado este plano em `docs/exec_plans/completed/implementar_cli_elevador.md`.
 
 ## Surpresas e Descobertas
@@ -34,6 +34,9 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
 - Observação: a suíte completa exige uma versão mais nova do Python do que a disponível no ambiente.
   Evidência: `python3 -m pytest` usou Python 3.10.12 e interrompeu a coleta de quatro módulos do Garbage Collector porque `enum.StrEnum` não existe nessa versão; o projeto exige Python 3.14.5 ou superior.
 
+- Observação: instalar `uv` tornou acessível o Python 3.14.5 já provisionado e resolveu os bloqueios de validação.
+  Evidência: as cinco validações obrigatórias retornaram código zero; a suíte completa aprovou 60 testes com 92% de cobertura.
+
 ## Registro de Decisões
 
 - Decisão: carregar modelos somente para análise estática e importar as implementações concretas dentro de fábricas privadas.
@@ -46,7 +49,7 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
 
 ## Resultados e Retrospectiva
 
-Foram entregues a formatação dos oito eventos, o comando `demo`, a validação de `--rounds`, rodadas sucessivas na mesma instância, chamadas, eventos, resumos e o ponto de entrada do pacote. Os 16 testes isolados da CLI passaram com Python 3.10.12, assim como a compilação dos módulos e o validador de ExecPlans. A execução de Ruff, mypy e da suíte completa permanece bloqueada pela ausência de `uv`, Ruff, mypy e Python 3.14.5 no ambiente. A demonstração real continuará dependendo das implementações de modelos, geração e motor, conforme previsto pela divisão independente.
+Foram entregues a formatação dos oito eventos, o comando `demo`, a validação de `--rounds`, rodadas sucessivas na mesma instância, chamadas, eventos, resumos e o ponto de entrada do pacote. Ruff, Ruff Format, mypy, o validador de ExecPlans e a suíte completa passaram com Python 3.14.5. A suíte aprovou 60 testes e registrou 92% de cobertura. A demonstração real continuará dependendo das implementações de modelos, geração e motor, conforme previsto pela divisão independente.
 
 ## Contexto e Orientação
 
