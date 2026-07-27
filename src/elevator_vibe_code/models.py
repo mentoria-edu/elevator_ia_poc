@@ -72,67 +72,33 @@ class Passenger:
 
 
 @dataclass(frozen=True, slots=True)
-class ElevatorCall:
-    """Chamada com passageiros em uma fila FIFO."""
+class ServicePhase:
+    """Fase com solicitações individuais em uma fila FIFO."""
 
-    floor: Floor
     direction: Direction
-    passengers: tuple[Passenger, ...]
+    requests: tuple[Passenger, ...]
 
     def __post_init__(self) -> None:
-        """Valida capacidade, origem e direção dos passageiros."""
-        passenger_count = len(self.passengers)
-        if not 1 <= passenger_count <= ELEVATOR_CAPACITY:
+        """Valida direção, capacidade e solicitações da fase."""
+        request_count = len(self.requests)
+        if not 1 <= request_count <= ELEVATOR_CAPACITY:
             raise ValueError(
-                f"Quantidade de passageiros inválida: {passenger_count}. "
+                f"Quantidade de solicitações inválida: {request_count}. "
                 f"Esperado um valor entre 1 e {ELEVATOR_CAPACITY}."
             )
-        for passenger in self.passengers:
-            if passenger.origin != self.floor:
-                raise ValueError(
-                    "Origem do passageiro incompatível com a chamada: "
-                    f"passageiro={passenger.passenger_id!r}, "
-                    f"origem={passenger.origin.number}, "
-                    f"andar da chamada={self.floor.number}."
-                )
+        if self.direction is Direction.IDLE:
+            raise ValueError(
+                "Direção de fase inválida: PARADO. "
+                "Esperado SUBINDO ou DESCENDO."
+            )
+        for passenger in self.requests:
             if passenger.direction is not self.direction:
                 raise ValueError(
-                    "Direção do passageiro incompatível com a chamada: "
+                    "Direção do passageiro incompatível com a fase: "
                     f"passageiro={passenger.passenger_id!r}, "
                     f"direção={passenger.direction.value}, "
-                    f"direção da chamada={self.direction.value}."
+                    f"direção da fase={self.direction.value}."
                 )
-
-
-@dataclass(frozen=True, slots=True)
-class ServiceRound:
-    """Rodada com uma chamada de subida e uma chamada de descida."""
-
-    upward_call: ElevatorCall
-    downward_call: ElevatorCall
-
-    def __post_init__(self) -> None:
-        """Garante a ordem e a semântica das duas chamadas."""
-        if (
-            self.upward_call.floor.number != GROUND_FLOOR_NUMBER
-            or self.upward_call.direction is not Direction.UP
-        ):
-            raise ValueError(
-                "Chamada de subida inválida: "
-                f"andar={self.upward_call.floor.number}, "
-                f"direção={self.upward_call.direction.value}. "
-                "Esperada chamada SUBINDO no térreo."
-            )
-        if (
-            self.downward_call.floor.number == GROUND_FLOOR_NUMBER
-            or self.downward_call.direction is not Direction.DOWN
-        ):
-            raise ValueError(
-                "Chamada de descida inválida: "
-                f"andar={self.downward_call.floor.number}, "
-                f"direção={self.downward_call.direction.value}. "
-                "Esperada chamada DESCENDO em um andar superior."
-            )
 
 
 class EventKind(Enum):
