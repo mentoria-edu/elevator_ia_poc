@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Protocol, TextIO
 if TYPE_CHECKING:
     from elevator_vibe_code.generation import RoundGenerator
     from elevator_vibe_code.models import (
+        ElevatorCall,
         ElevatorEvent,
         ElevatorSnapshot,
         ServiceRound,
@@ -91,14 +92,38 @@ def _create_elevator() -> _Elevator:
     return elevator
 
 
-def _format_call(label: str, elevator_call: object) -> str:
-    floor = getattr(elevator_call, "floor")
-    direction = getattr(elevator_call, "direction")
-    passengers = getattr(elevator_call, "passengers")
+def _format_call(label: str, elevator_call: ElevatorCall) -> str:
+    floor = elevator_call.floor
+    direction = elevator_call.direction
+    passengers = elevator_call.passengers
     names = ", ".join(passenger.name for passenger in passengers)
     return (
         f"{label}: Andar {floor.number:02d} | {direction.value} | "
         f"Passageiros: {names}"
+    )
+
+
+def _format_duration(elapsed_seconds: int) -> str:
+    minutes, seconds = divmod(elapsed_seconds, 60)
+    return f"{minutes:02d}:{seconds:02d}"
+
+
+def _format_summary(
+    initial_snapshot: ElevatorSnapshot,
+    final_snapshot: ElevatorSnapshot,
+    service_round: ServiceRound,
+) -> str:
+    duration = (
+        final_snapshot.elapsed_seconds - initial_snapshot.elapsed_seconds
+    )
+    attended = len(service_round.upward_call.passengers) + len(
+        service_round.downward_call.passengers
+    )
+    return (
+        f"Resumo: Andar final {final_snapshot.current_floor.number:02d} | "
+        f"Tempo {_format_duration(duration)} | Atendidos {attended} | "
+        f"Filas: subida {len(final_snapshot.upward_waiting)}, "
+        f"descida {len(final_snapshot.downward_waiting)}"
     )
 
 
@@ -125,8 +150,14 @@ def main(
             _format_call("Chamada de descida", service_round.downward_call),
             file=stream,
         )
+        initial_snapshot = elevator.snapshot()
         elevator.start_round(service_round)
         for event in elevator.run_until_idle():
             print(format_event(event), file=stream)
+        final_snapshot = elevator.snapshot()
+        print(
+            _format_summary(initial_snapshot, final_snapshot, service_round),
+            file=stream,
+        )
 
     return 0

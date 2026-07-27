@@ -16,7 +16,7 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
 - [x] (2026-07-27 00:46Z) Criado este ExecPlan com a estratégia de isolamento.
 - [x] (2026-07-27 00:56Z) Implementada e testada a formatação dos oito tipos de evento.
 - [x] (2026-07-27 01:12Z) Implementados e testados argumentos e uma rodada isolada.
-- [ ] Implementar e testar rodadas sucessivas e seus resumos.
+- [x] (2026-07-27 01:25Z) Implementadas e testadas três rodadas sucessivas com resumos relativos.
 - [ ] Expor o ponto de entrada do pacote e executar todas as validações.
 - [ ] Arquivar este plano em `docs/exec_plans/completed/implementar_cli_elevador.md`.
 
