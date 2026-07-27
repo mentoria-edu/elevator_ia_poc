@@ -33,8 +33,11 @@ uv run python -m tools.validators.check_exec_plans
 Para comprovar a integração entre geração, modelos, motor e CLI, execute:
 
 ```bash
-uv run python -m elevator_vibe_code demo --rounds 2
+uv run python -m elevator_vibe_code demo --rounds 2 --step-delay 2
 ```
+
+O delay entre os passos é de 2 segundos por padrão. Use `--step-delay 0`
+para executar a demonstração sem espera.
 
 O pacote principal fica em `src/elevator_vibe_code/`. Consulte
 `ARCHITECTURE.md` para os limites de módulos e `AGENTS.md` para o fluxo de

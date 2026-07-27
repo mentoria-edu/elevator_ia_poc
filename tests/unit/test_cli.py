@@ -148,6 +148,7 @@ def make_snapshot(
     *,
     upward_waiting: tuple[Passenger, ...] = (),
     downward_waiting: tuple[Passenger, ...] = (),
+    is_idle: bool = True,
 ) -> ElevatorSnapshot:
     """Cria um snapshot real com os dados usados no resumo."""
     return ElevatorSnapshot(
@@ -157,7 +158,7 @@ def make_snapshot(
         upward_waiting=upward_waiting,
         downward_waiting=downward_waiting,
         elapsed_seconds=elapsed_seconds,
-        is_idle=True,
+        is_idle=is_idle,
     )
 
 
@@ -199,10 +200,43 @@ class FakeElevator:
         self.actions.append("start_round")
         self.started_rounds.append(service_round)
 
-    def run_until_idle(self) -> tuple[ElevatorEvent, ...]:
+    def step(self) -> tuple[ElevatorEvent, ...]:
         """Retorna o próximo lote de eventos configurado."""
-        self.actions.append("run_until_idle")
+        self.actions.append("step")
         return next(self._event_batches)
+
+
+class RecordingSleeper:
+    """Registra esperas e a saída disponível quando elas acontecem."""
+
+    def __init__(self, output: StringIO) -> None:
+        self._output = output
+        self.delays: list[float] = []
+        self.output_snapshots: list[str] = []
+
+    def __call__(self, delay: float) -> None:
+        """Registra o delay sem aguardar em tempo real."""
+        self.delays.append(delay)
+        self.output_snapshots.append(self._output.getvalue())
+
+
+def make_two_step_elevator() -> FakeElevator:
+    """Cria um elevador fake com um passo intermediário e um terminal."""
+    first_event = make_event(EventKind.ARRIVAL)
+    final_event = make_event(
+        EventKind.IDLE,
+        elapsed_seconds=7,
+        floor_number=12,
+        direction=Direction.IDLE,
+    )
+    return FakeElevator(
+        (
+            make_snapshot(0, 0),
+            make_snapshot(3, 2, is_idle=False),
+            make_snapshot(7, 12),
+        ),
+        ((first_event,), (final_event,)),
+    )
 
 
 def test_demo_executes_one_round_by_default() -> None:
@@ -228,7 +262,7 @@ def test_demo_executes_one_round_by_default() -> None:
     assert elevator.actions == [
         "snapshot",
         "start_round",
-        "run_until_idle",
+        "step",
         "snapshot",
     ]
     assert output.getvalue().splitlines() == [
@@ -240,6 +274,116 @@ def test_demo_executes_one_round_by_default() -> None:
         "Resumo: Andar final 12 | Tempo 00:07 | Atendidos 3 | "
         "Filas: subida 0, descida 0",
     ]
+
+
+def test_demo_waits_default_delay_only_between_steps_after_output() -> None:
+    service_round = make_service_round()
+    generator = FakeRoundGenerator((service_round,))
+    elevator = make_two_step_elevator()
+    output = StringIO()
+    sleeper = RecordingSleeper(output)
+
+    with patch(
+        "elevator_vibe_code.cli._create_elevator",
+        return_value=elevator,
+    ):
+        result = main(
+            ["demo"],
+            generator=generator,
+            output=output,
+            sleeper=sleeper,
+        )
+
+    assert result == 0
+    assert sleeper.delays == [2.0]
+    assert len(sleeper.output_snapshots) == 1
+    output_before_delay = sleeper.output_snapshots[0]
+    assert "[00:03] Andar 02 | SUBINDO | Chegada" in output_before_delay
+    assert (
+        "[00:07] Andar 12 | PARADO | Elevador parado"
+        not in output_before_delay
+    )
+    assert elevator.actions == [
+        "snapshot",
+        "start_round",
+        "step",
+        "snapshot",
+        "step",
+        "snapshot",
+    ]
+    assert output.getvalue().splitlines()[-2:] == [
+        "[00:07] Andar 12 | PARADO | Elevador parado",
+        "Resumo: Andar final 12 | Tempo 00:07 | Atendidos 3 | "
+        "Filas: subida 0, descida 0",
+    ]
+
+
+def test_demo_accepts_decimal_step_delay() -> None:
+    service_round = make_service_round()
+    generator = FakeRoundGenerator((service_round,))
+    elevator = make_two_step_elevator()
+    output = StringIO()
+    sleeper = RecordingSleeper(output)
+
+    with patch(
+        "elevator_vibe_code.cli._create_elevator",
+        return_value=elevator,
+    ):
+        result = main(
+            ["demo", "--step-delay", "0.5"],
+            generator=generator,
+            output=output,
+            sleeper=sleeper,
+        )
+
+    assert result == 0
+    assert sleeper.delays == [0.5]
+
+
+def test_demo_disables_wait_when_step_delay_is_zero() -> None:
+    service_round = make_service_round()
+    generator = FakeRoundGenerator((service_round,))
+    elevator = make_two_step_elevator()
+    output = StringIO()
+    sleeper = RecordingSleeper(output)
+
+    with patch(
+        "elevator_vibe_code.cli._create_elevator",
+        return_value=elevator,
+    ):
+        result = main(
+            ["demo", "--step-delay", "0"],
+            generator=generator,
+            output=output,
+            sleeper=sleeper,
+        )
+
+    assert result == 0
+    assert sleeper.delays == []
+    assert elevator.actions.count("step") == 2
+
+
+@pytest.mark.parametrize("step_delay", ["-0.1", "nan", "inf", "-inf", "texto"])
+def test_demo_rejects_invalid_step_delay(step_delay: str) -> None:
+    with pytest.raises(SystemExit) as error:
+        main(
+            ["demo", "--step-delay", step_delay],
+            generator=FakeRoundGenerator(()),
+            output=StringIO(),
+        )
+
+    assert error.value.code == 2
+
+
+def test_demo_rejects_step_delay_with_underscore() -> None:
+    with pytest.raises(SystemExit) as error:
+        main(
+            ["demo", "--step_delay", "2"],
+            generator=FakeRoundGenerator(()),
+            output=StringIO(),
+        )
+
+    assert error.value.code == 2
 
 
 @pytest.mark.parametrize("rounds", ["0", "-1", "texto"])
@@ -299,15 +443,15 @@ def test_demo_executes_three_rounds_on_the_same_elevator() -> None:
     assert elevator.actions == [
         "snapshot",
         "start_round",
-        "run_until_idle",
+        "step",
         "snapshot",
         "snapshot",
         "start_round",
-        "run_until_idle",
+        "step",
         "snapshot",
         "snapshot",
         "start_round",
-        "run_until_idle",
+        "step",
         "snapshot",
     ]
     lines = output.getvalue().splitlines()
@@ -360,7 +504,7 @@ def test_demo_composes_seeded_generation_models_engine_and_cli() -> None:
         return_value=elevator,
     ):
         result = main(
-            ["demo", "--rounds", "2"],
+            ["demo", "--rounds", "2", "--step-delay", "0"],
             generator=generator,
             output=output,
         )
