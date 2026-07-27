@@ -4,8 +4,8 @@
 
 - `src/elevator_vibe_code/models.py`: valores imutáveis e invariantes do
   domínio.
-- `src/elevator_vibe_code/generation.py`: criação de rodadas válidas por meio
-  do contrato `RoundGenerator`.
+- `src/elevator_vibe_code/generation.py`: criação independente das fases por meio do
+  contrato `PhaseGenerator`.
 - `src/elevator_vibe_code/elevator.py`: motor determinístico de atendimento e
   produção de eventos.
 - `src/elevator_vibe_code/cli.py`: orquestração e apresentação da demonstração
@@ -33,8 +33,10 @@ quando uma funcionalidade concreta as exigir.
 
 ## Composição da Aplicação
 
-A CLI solicita uma rodada ao gerador, entrega os modelos validados ao motor e
-formata os eventos e snapshots devolvidos pelo atendimento. Os módulos se
+A CLI solicita e apresenta a fase de subida, entrega o modelo validado ao
+motor e aguarda seu término. Somente então solicita e apresenta a fase de
+descida. As duas fases usam o mesmo elevador, preservando andar e tempo, e a
+CLI formata os eventos e snapshots devolvidos pelo atendimento. Os módulos se
 comunicam somente pelos contratos públicos de `models.py` e
 `generation.py`; regras operacionais permanecem no motor e regras de
 apresentação permanecem na CLI.

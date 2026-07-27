@@ -11,12 +11,12 @@ from elevator_vibe_code.models import (
     EventKind,
     Floor,
     Passenger,
-    ServiceRound,
+    ServicePhase,
 )
 
 
 class Elevator:
-    """Executa rodadas de atendimento e expõe eventos cronológicos."""
+    """Executa fases de atendimento e expõe eventos cronológicos."""
 
     def __init__(self, initial_floor: Floor | None = None) -> None:
         """Cria um elevador ocioso no andar informado ou no térreo."""
@@ -25,29 +25,31 @@ class Elevator:
         self._cabin: list[Passenger] = []
         self._upward_waiting: list[Passenger] = []
         self._downward_waiting: list[Passenger] = []
-        self._upward_floor = Floor(GROUND_FLOOR_NUMBER)
-        self._downward_floor = Floor(GROUND_FLOOR_NUMBER)
+        self._phase_direction = Direction.IDLE
         self._elapsed_seconds = 0
-        self._round_active = False
+        self._phase_active = False
 
-    def start_round(self, service_round: ServiceRound) -> None:
-        """Registra as duas filas de uma nova rodada ociosa."""
-        if self._has_pending_work():
+    def start_phase(self, phase: ServicePhase) -> None:
+        """Registra as solicitações de uma nova fase ociosa."""
+        if self._phase_active:
             raise RuntimeError(
-                "Não é possível iniciar uma nova rodada: "
-                "a rodada anterior ainda possui passageiros."
+                "Não é possível iniciar uma nova fase: "
+                "a fase anterior ainda possui passageiros."
             )
 
-        self._upward_floor = service_round.upward_call.floor
-        self._downward_floor = service_round.downward_call.floor
-        self._upward_waiting = list(service_round.upward_call.passengers)
-        self._downward_waiting = list(service_round.downward_call.passengers)
-        self._round_active = True
+        self._upward_waiting = []
+        self._downward_waiting = []
+        if phase.direction is Direction.UP:
+            self._upward_waiting = list(phase.requests)
+        else:
+            self._downward_waiting = list(phase.requests)
+        self._phase_direction = phase.direction
+        self._phase_active = True
         self._direction = Direction.IDLE
 
     def step(self) -> tuple[ElevatorEvent, ...]:
         """Executa um atendimento local ou avança no máximo um andar."""
-        if not self._round_active:
+        if not self._phase_active:
             return ()
 
         if self._should_service_current_floor():
@@ -62,9 +64,9 @@ class Elevator:
         return (self._event(EventKind.FLOOR_PASSED),)
 
     def run_until_idle(self) -> tuple[ElevatorEvent, ...]:
-        """Executa passos sucessivos até a rodada terminar."""
+        """Executa passos sucessivos até a fase terminar."""
         events: list[ElevatorEvent] = []
-        while self._round_active:
+        while self._phase_active:
             events.extend(self.step())
         return tuple(events)
 
@@ -77,7 +79,7 @@ class Elevator:
             upward_waiting=tuple(self._upward_waiting),
             downward_waiting=tuple(self._downward_waiting),
             elapsed_seconds=self._elapsed_seconds,
-            is_idle=not self._round_active,
+            is_idle=not self._phase_active,
         )
 
     def _has_pending_work(self) -> bool:
@@ -105,14 +107,20 @@ class Elevator:
     def _waiting_at_current_floor(
         self,
     ) -> tuple[list[Passenger], Direction | None]:
-        if self._current_floor == self._upward_floor and self._upward_waiting:
-            return self._upward_waiting, Direction.UP
-        if (
-            self._current_floor == self._downward_floor
-            and self._downward_waiting
-        ):
-            return self._downward_waiting, Direction.DOWN
-        return [], None
+        waiting = self._active_waiting()
+        requests = [
+            passenger
+            for passenger in waiting
+            if passenger.origin == self._current_floor
+        ]
+        if not requests:
+            return [], None
+        return requests, self._phase_direction
+
+    def _active_waiting(self) -> list[Passenger]:
+        if self._phase_direction is Direction.UP:
+            return self._upward_waiting
+        return self._downward_waiting
 
     def _prepare_direction_for_local_service(self) -> None:
         if self._direction is not Direction.IDLE:
@@ -165,16 +173,18 @@ class Elevator:
         self,
         arrival_direction: Direction,
     ) -> tuple[Passenger, ...]:
-        waiting, waiting_direction = self._waiting_at_current_floor()
-        if not waiting or waiting_direction is None:
+        waiting_here, waiting_direction = self._waiting_at_current_floor()
+        if not waiting_here or waiting_direction is None:
             return ()
         if self._cabin and waiting_direction is not arrival_direction:
             return ()
 
         available_places = ELEVATOR_CAPACITY - len(self._cabin)
-        entered = tuple(waiting[:available_places])
+        entered = tuple(waiting_here[:available_places])
         self._cabin.extend(entered)
-        del waiting[:available_places]
+        active_waiting = self._active_waiting()
+        for passenger in entered:
+            active_waiting.remove(passenger)
         return entered
 
     def _finish_stop(
@@ -182,7 +192,7 @@ class Elevator:
         arrival_direction: Direction,
     ) -> tuple[ElevatorEvent, ...]:
         if not self._has_pending_work():
-            self._round_active = False
+            self._phase_active = False
             self._direction = Direction.IDLE
             return (self._event(EventKind.IDLE),)
 
@@ -211,22 +221,15 @@ class Elevator:
 
     def _direction_toward_nearest_call(self) -> Direction:
         current_number = self._current_floor.number
-        candidates: list[tuple[int, int, int]] = []
-        if self._upward_waiting:
-            candidates.append((
-                abs(self._upward_floor.number - current_number),
-                0,
-                self._upward_floor.number,
-            ))
-        if self._downward_waiting:
-            candidates.append((
-                abs(self._downward_floor.number - current_number),
-                1,
-                self._downward_floor.number,
-            ))
-
-        _, _, target_number = min(candidates)
-        if target_number > current_number:
+        waiting = self._active_waiting()
+        _, nearest_request = min(
+            enumerate(waiting),
+            key=lambda item: (
+                abs(item[1].origin.number - current_number),
+                item[0],
+            ),
+        )
+        if nearest_request.origin.number > current_number:
             return Direction.UP
         return Direction.DOWN
 

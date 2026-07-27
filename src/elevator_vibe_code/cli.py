@@ -10,12 +10,11 @@ from time import sleep
 from typing import TYPE_CHECKING, Protocol, TextIO
 
 if TYPE_CHECKING:
-    from elevator_vibe_code.generation import RoundGenerator
+    from elevator_vibe_code.generation import PhaseGenerator
     from elevator_vibe_code.models import (
-        ElevatorCall,
         ElevatorEvent,
         ElevatorSnapshot,
-        ServiceRound,
+        ServicePhase,
     )
 
 _EVENT_DESCRIPTIONS = {
@@ -34,11 +33,11 @@ _PASSENGER_EVENT_KINDS = {"passengers_exited", "passengers_entered"}
 class _Elevator(Protocol):
     """Operações do motor consumidas pela CLI."""
 
-    def start_round(self, service_round: ServiceRound) -> None:
-        """Inicia uma rodada de atendimento."""
+    def start_phase(self, phase: ServicePhase) -> None:
+        """Inicia uma fase de atendimento."""
 
     def step(self) -> tuple[ElevatorEvent, ...]:
-        """Executa o próximo passo da rodada."""
+        """Executa o próximo passo da fase."""
 
     def snapshot(self) -> ElevatorSnapshot:
         """Retorna o estado observável do elevador."""
@@ -101,10 +100,10 @@ def _create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _create_generator() -> RoundGenerator:
+def _create_generator() -> PhaseGenerator:
     from elevator_vibe_code.generation import FakerPassengerGenerator
 
-    generator: RoundGenerator = FakerPassengerGenerator()
+    generator: PhaseGenerator = FakerPassengerGenerator()
     return generator
 
 
@@ -115,15 +114,15 @@ def _create_elevator() -> _Elevator:
     return elevator
 
 
-def _format_call(label: str, elevator_call: ElevatorCall) -> str:
-    floor = elevator_call.floor
-    direction = elevator_call.direction
-    passengers = elevator_call.passengers
-    names = ", ".join(passenger.name for passenger in passengers)
-    return (
-        f"{label}: Andar {floor.number:02d} | {direction.value} | "
-        f"Passageiros: {names}"
+def _format_phase(label: str, phase: ServicePhase) -> str:
+    lines = [f"{label}:"]
+    lines.extend(
+        f"- {request.name} | "
+        f"chamada no andar {request.origin.number:02d} | "
+        f"destino {request.destination.number:02d}"
+        for request in phase.requests
     )
+    return "\n".join(lines)
 
 
 def _format_duration(elapsed_seconds: int) -> str:
@@ -134,17 +133,15 @@ def _format_duration(elapsed_seconds: int) -> str:
 def _format_summary(
     initial_snapshot: ElevatorSnapshot,
     final_snapshot: ElevatorSnapshot,
-    service_round: ServiceRound,
+    attended_count: int,
 ) -> str:
     duration = (
         final_snapshot.elapsed_seconds - initial_snapshot.elapsed_seconds
     )
-    attended = len(service_round.upward_call.passengers) + len(
-        service_round.downward_call.passengers
-    )
     return (
         f"Resumo: Andar final {final_snapshot.current_floor.number:02d} | "
-        f"Tempo {_format_duration(duration)} | Atendidos {attended} | "
+        f"Tempo {_format_duration(duration)} | "
+        f"Atendidos {attended_count} | "
         f"Filas: subida {len(final_snapshot.upward_waiting)}, "
         f"descida {len(final_snapshot.downward_waiting)}"
     )
@@ -173,39 +170,49 @@ def _run_steps_until_idle(
 def main(
     argv: Sequence[str] | None = None,
     *,
-    generator: RoundGenerator | None = None,
+    generator: PhaseGenerator | None = None,
     output: TextIO | None = None,
     sleeper: Callable[[float], None] = sleep,
 ) -> int:
     """Executa a demonstração solicitada pela linha de comando."""
     arguments = _create_parser().parse_args(argv)
-    round_generator = (
+    phase_generator = (
         generator if generator is not None else _create_generator()
     )
     elevator = _create_elevator()
     stream = output if output is not None else sys.stdout
 
     for round_number in range(1, arguments.rounds + 1):
-        service_round = round_generator.generate_round()
+        upward_phase = phase_generator.generate_upward_phase()
         print(f"Rodada {round_number}", file=stream)
-        print(
-            _format_call("Chamada de subida", service_round.upward_call),
-            file=stream,
-        )
-        print(
-            _format_call("Chamada de descida", service_round.downward_call),
-            file=stream,
-        )
+        print(_format_phase("Subida", upward_phase), file=stream)
         initial_snapshot = elevator.snapshot()
-        elevator.start_round(service_round)
+        elevator.start_phase(upward_phase)
+        _run_steps_until_idle(
+            elevator,
+            step_delay=arguments.step_delay,
+            sleeper=sleeper,
+            stream=stream,
+        )
+
+        downward_phase = phase_generator.generate_downward_phase()
+        print(_format_phase("Descida", downward_phase), file=stream)
+        elevator.start_phase(downward_phase)
         final_snapshot = _run_steps_until_idle(
             elevator,
             step_delay=arguments.step_delay,
             sleeper=sleeper,
             stream=stream,
         )
+        attended_count = len(upward_phase.requests) + len(
+            downward_phase.requests
+        )
         print(
-            _format_summary(initial_snapshot, final_snapshot, service_round),
+            _format_summary(
+                initial_snapshot,
+                final_snapshot,
+                attended_count,
+            ),
             file=stream,
         )
 

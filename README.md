@@ -36,7 +36,9 @@ Para comprovar a integração entre geração, modelos, motor e CLI, execute:
 uv run python -m elevator_vibe_code demo --rounds 2 --step-delay 2
 ```
 
-O delay entre os passos é de 2 segundos por padrão. Use `--step-delay 0`
+A demonstração lista cada solicitação da subida e, após concluir essa fase,
+lista os novos usuários e origens da descida. O delay entre os passos é de 2
+segundos por padrão. Use `--step-delay 0`
 para executar a demonstração sem espera.
 
 O pacote principal fica em `src/elevator_vibe_code/`. Consulte
