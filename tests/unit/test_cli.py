@@ -13,13 +13,12 @@ from elevator_vibe_code.elevator import Elevator
 from elevator_vibe_code.generation import FakerPassengerGenerator
 from elevator_vibe_code.models import (
     Direction,
-    ElevatorCall,
     ElevatorEvent,
     ElevatorSnapshot,
     EventKind,
     Floor,
     Passenger,
-    ServiceRound,
+    ServicePhase,
 )
 
 
@@ -49,8 +48,10 @@ def make_event(
     passenger_names: tuple[str, ...] = (),
 ) -> ElevatorEvent:
     """Cria um evento real com os dados observados pela CLI."""
+    origin = 0 if direction is Direction.UP else floor_number
+    destination = floor_number if direction is Direction.UP else 0
     passengers = tuple(
-        make_passenger(f"event-{index}", name, 0, 2)
+        make_passenger(f"event-{index}", name, origin, destination)
         for index, name in enumerate(passenger_names)
     )
     return ElevatorEvent(
@@ -116,30 +117,26 @@ def test_format_event_formats_minutes_floor_and_direction() -> None:
         direction=Direction.DOWN,
     )
 
-    result = format_event(event)
-
-    assert result == "[02:05] Andar 17 | DESCENDO | Passando"
+    assert format_event(event) == "[02:05] Andar 17 | DESCENDO | Passando"
 
 
-def make_service_round() -> ServiceRound:
-    """Cria uma rodada real e determinística para os testes da CLI."""
-    upward_passengers = (
-        make_passenger("up-1", "Ana Souza", 0, 4),
-        make_passenger("up-2", "Carlos Lima", 0, 8),
-    )
-    downward_passengers = (make_passenger("down-1", "Maria Alves", 12, 0),)
-    return ServiceRound(
-        upward_call=ElevatorCall(
-            floor=Floor(0),
-            direction=Direction.UP,
-            passengers=upward_passengers,
-        ),
-        downward_call=ElevatorCall(
-            floor=Floor(12),
-            direction=Direction.DOWN,
-            passengers=downward_passengers,
+def make_service_phases() -> tuple[ServicePhase, ServicePhase]:
+    """Cria duas fases reais e determinísticas para a CLI."""
+    upward_phase = ServicePhase(
+        direction=Direction.UP,
+        requests=(
+            make_passenger("up-1", "Ana Souza", 0, 4),
+            make_passenger("up-2", "Carlos Lima", 0, 8),
         ),
     )
+    downward_phase = ServicePhase(
+        direction=Direction.DOWN,
+        requests=(
+            make_passenger("down-1", "Maria Alves", 12, 0),
+            make_passenger("down-2", "João Silva", 5, 0),
+        ),
+    )
+    return upward_phase, downward_phase
 
 
 def make_snapshot(
@@ -162,17 +159,32 @@ def make_snapshot(
     )
 
 
-class FakeRoundGenerator:
-    """Entrega rodadas configuradas e registra quantas foram solicitadas."""
+class FakePhaseGenerator:
+    """Entrega fases configuradas e registra a ordem de geração."""
 
-    def __init__(self, rounds: tuple[ServiceRound, ...]) -> None:
-        self._rounds: Iterator[ServiceRound] = iter(rounds)
-        self.generate_count = 0
+    def __init__(
+        self,
+        upward_phases: tuple[ServicePhase, ...],
+        downward_phases: tuple[ServicePhase, ...],
+        actions: list[str] | None = None,
+    ) -> None:
+        self._upward_phases: Iterator[ServicePhase] = iter(upward_phases)
+        self._downward_phases: Iterator[ServicePhase] = iter(downward_phases)
+        self.actions = actions if actions is not None else []
+        self.upward_count = 0
+        self.downward_count = 0
 
-    def generate_round(self) -> ServiceRound:
-        """Retorna a próxima rodada configurada."""
-        self.generate_count += 1
-        return next(self._rounds)
+    def generate_upward_phase(self) -> ServicePhase:
+        """Retorna a próxima subida configurada."""
+        self.actions.append("generate_upward_phase")
+        self.upward_count += 1
+        return next(self._upward_phases)
+
+    def generate_downward_phase(self) -> ServicePhase:
+        """Retorna a próxima descida configurada."""
+        self.actions.append("generate_downward_phase")
+        self.downward_count += 1
+        return next(self._downward_phases)
 
 
 class FakeElevator:
@@ -182,27 +194,30 @@ class FakeElevator:
         self,
         snapshots: tuple[ElevatorSnapshot, ...],
         event_batches: tuple[tuple[ElevatorEvent, ...], ...],
+        actions: list[str] | None = None,
     ) -> None:
         self._snapshots: Iterator[ElevatorSnapshot] = iter(snapshots)
         self._event_batches: Iterator[tuple[ElevatorEvent, ...]] = iter(
             event_batches
         )
-        self.actions: list[str] = []
-        self.started_rounds: list[ServiceRound] = []
+        self.actions = actions if actions is not None else []
+        self.started_phases: list[ServicePhase] = []
+        self.step_count = 0
 
     def snapshot(self) -> ElevatorSnapshot:
         """Retorna o próximo snapshot configurado."""
         self.actions.append("snapshot")
         return next(self._snapshots)
 
-    def start_round(self, service_round: ServiceRound) -> None:
-        """Registra a rodada recebida."""
-        self.actions.append("start_round")
-        self.started_rounds.append(service_round)
+    def start_phase(self, phase: ServicePhase) -> None:
+        """Registra a fase recebida."""
+        self.actions.append(f"start_{phase.direction.name.lower()}_phase")
+        self.started_phases.append(phase)
 
     def step(self) -> tuple[ElevatorEvent, ...]:
         """Retorna o próximo lote de eventos configurado."""
-        self.actions.append("step")
+        self.step_count += 1
+        self.actions.append(f"step_{self.step_count}")
         return next(self._event_batches)
 
 
@@ -220,33 +235,63 @@ class RecordingSleeper:
         self.output_snapshots.append(self._output.getvalue())
 
 
-def make_two_step_elevator() -> FakeElevator:
-    """Cria um elevador fake com um passo intermediário e um terminal."""
-    first_event = make_event(EventKind.ARRIVAL)
-    final_event = make_event(
-        EventKind.IDLE,
-        elapsed_seconds=7,
+def make_one_step_elevator(
+    actions: list[str] | None = None,
+) -> FakeElevator:
+    """Cria um elevador fake com um passo terminal por fase."""
+    upward_event = make_event(EventKind.ARRIVAL)
+    downward_event = make_event(
+        EventKind.ARRIVAL,
+        elapsed_seconds=20,
         floor_number=12,
+        direction=Direction.DOWN,
+    )
+    return FakeElevator(
+        (
+            make_snapshot(0, 0),
+            make_snapshot(8, 8),
+            make_snapshot(20, 0),
+        ),
+        ((upward_event,), (downward_event,)),
+        actions,
+    )
+
+
+def make_delayed_elevator() -> FakeElevator:
+    """Cria uma subida de dois passos e uma descida terminal."""
+    first_event = make_event(EventKind.ARRIVAL)
+    upward_idle = make_event(
+        EventKind.IDLE,
+        elapsed_seconds=8,
+        floor_number=8,
+        direction=Direction.IDLE,
+    )
+    downward_idle = make_event(
+        EventKind.IDLE,
+        elapsed_seconds=15,
+        floor_number=0,
         direction=Direction.IDLE,
     )
     return FakeElevator(
         (
             make_snapshot(0, 0),
             make_snapshot(3, 2, is_idle=False),
-            make_snapshot(7, 12),
+            make_snapshot(8, 8),
+            make_snapshot(15, 0),
         ),
-        ((first_event,), (final_event,)),
+        ((first_event,), (upward_idle,), (downward_idle,)),
     )
 
 
-def test_demo_executes_one_round_by_default() -> None:
-    service_round = make_service_round()
-    event = make_event(EventKind.ARRIVAL)
-    generator = FakeRoundGenerator((service_round,))
-    elevator = FakeElevator(
-        (make_snapshot(0, 0), make_snapshot(7, 12)),
-        ((event,),),
+def test_demo_executes_two_sequential_phases_by_default() -> None:
+    upward_phase, downward_phase = make_service_phases()
+    actions: list[str] = []
+    generator = FakePhaseGenerator(
+        (upward_phase,),
+        (downward_phase,),
+        actions,
     )
+    elevator = make_one_step_elevator(actions)
     output = StringIO()
 
     with patch(
@@ -257,35 +302,89 @@ def test_demo_executes_one_round_by_default() -> None:
 
     assert result == 0
     create_elevator.assert_called_once_with()
-    assert generator.generate_count == 1
-    assert elevator.started_rounds == [service_round]
-    assert elevator.actions == [
+    assert elevator.started_phases == [upward_phase, downward_phase]
+    assert actions == [
+        "generate_upward_phase",
         "snapshot",
-        "start_round",
-        "step",
+        "start_up_phase",
+        "step_1",
+        "snapshot",
+        "generate_downward_phase",
+        "start_down_phase",
+        "step_2",
         "snapshot",
     ]
     assert output.getvalue().splitlines() == [
         "Rodada 1",
-        "Chamada de subida: Andar 00 | SUBINDO | "
-        "Passageiros: Ana Souza, Carlos Lima",
-        "Chamada de descida: Andar 12 | DESCENDO | Passageiros: Maria Alves",
+        "Subida:",
+        "- Ana Souza | chamada no andar 00 | destino 04",
+        "- Carlos Lima | chamada no andar 00 | destino 08",
         "[00:03] Andar 02 | SUBINDO | Chegada",
-        "Resumo: Andar final 12 | Tempo 00:07 | Atendidos 3 | "
+        "Descida:",
+        "- Maria Alves | chamada no andar 12 | destino 00",
+        "- João Silva | chamada no andar 05 | destino 00",
+        "[00:20] Andar 12 | DESCENDO | Chegada",
+        "Resumo: Andar final 00 | Tempo 00:20 | Atendidos 4 | "
         "Filas: subida 0, descida 0",
     ]
 
 
+def test_downward_generation_and_list_follow_last_upward_exit() -> None:
+    upward_phase, downward_phase = make_service_phases()
+    actions: list[str] = []
+    generator = FakePhaseGenerator(
+        (upward_phase,),
+        (downward_phase,),
+        actions,
+    )
+    upward_exit = make_event(
+        EventKind.PASSENGERS_EXITED,
+        elapsed_seconds=8,
+        floor_number=8,
+        passenger_names=("Ana Souza",),
+    )
+    downward_arrival = make_event(
+        EventKind.ARRIVAL,
+        elapsed_seconds=9,
+        floor_number=7,
+        direction=Direction.DOWN,
+    )
+    elevator = FakeElevator(
+        (
+            make_snapshot(0, 0),
+            make_snapshot(8, 8),
+            make_snapshot(9, 7),
+        ),
+        ((upward_exit,), (downward_arrival,)),
+        actions,
+    )
+    output = StringIO()
+
+    with patch(
+        "elevator_vibe_code.cli._create_elevator", return_value=elevator
+    ):
+        main(["demo"], generator=generator, output=output)
+
+    assert actions.index("generate_downward_phase") > actions.index("step_1")
+    lines = output.getvalue().splitlines()
+    exit_index = lines.index("[00:08] Andar 08 | SUBINDO | Saíram: Ana Souza")
+    downward_list_index = lines.index("Descida:")
+    first_downward_event_index = lines.index(
+        "[00:09] Andar 07 | DESCENDO | Chegada"
+    )
+    assert exit_index < downward_list_index < first_downward_event_index
+    assert "Ana Souza" not in lines[downward_list_index + 1]
+
+
 def test_demo_waits_default_delay_only_between_steps_after_output() -> None:
-    service_round = make_service_round()
-    generator = FakeRoundGenerator((service_round,))
-    elevator = make_two_step_elevator()
+    upward_phase, downward_phase = make_service_phases()
+    generator = FakePhaseGenerator((upward_phase,), (downward_phase,))
+    elevator = make_delayed_elevator()
     output = StringIO()
     sleeper = RecordingSleeper(output)
 
     with patch(
-        "elevator_vibe_code.cli._create_elevator",
-        return_value=elevator,
+        "elevator_vibe_code.cli._create_elevator", return_value=elevator
     ):
         result = main(
             ["demo"],
@@ -296,42 +395,24 @@ def test_demo_waits_default_delay_only_between_steps_after_output() -> None:
 
     assert result == 0
     assert sleeper.delays == [2.0]
-    assert len(sleeper.output_snapshots) == 1
-    output_before_delay = sleeper.output_snapshots[0]
-    assert "[00:03] Andar 02 | SUBINDO | Chegada" in output_before_delay
     assert (
-        "[00:07] Andar 12 | PARADO | Elevador parado"
-        not in output_before_delay
+        "[00:03] Andar 02 | SUBINDO | Chegada" in sleeper.output_snapshots[0]
     )
-    assert elevator.actions == [
-        "snapshot",
-        "start_round",
-        "step",
-        "snapshot",
-        "step",
-        "snapshot",
-    ]
-    assert output.getvalue().splitlines()[-2:] == [
-        "[00:07] Andar 12 | PARADO | Elevador parado",
-        "Resumo: Andar final 12 | Tempo 00:07 | Atendidos 3 | "
-        "Filas: subida 0, descida 0",
-    ]
+    assert "Descida:" not in sleeper.output_snapshots[0]
 
 
 def test_demo_accepts_decimal_step_delay() -> None:
-    service_round = make_service_round()
-    generator = FakeRoundGenerator((service_round,))
-    elevator = make_two_step_elevator()
+    upward_phase, downward_phase = make_service_phases()
+    elevator = make_delayed_elevator()
     output = StringIO()
     sleeper = RecordingSleeper(output)
 
     with patch(
-        "elevator_vibe_code.cli._create_elevator",
-        return_value=elevator,
+        "elevator_vibe_code.cli._create_elevator", return_value=elevator
     ):
         result = main(
             ["demo", "--step-delay", "0.5"],
-            generator=generator,
+            generator=FakePhaseGenerator((upward_phase,), (downward_phase,)),
             output=output,
             sleeper=sleeper,
         )
@@ -341,26 +422,24 @@ def test_demo_accepts_decimal_step_delay() -> None:
 
 
 def test_demo_disables_wait_when_step_delay_is_zero() -> None:
-    service_round = make_service_round()
-    generator = FakeRoundGenerator((service_round,))
-    elevator = make_two_step_elevator()
+    upward_phase, downward_phase = make_service_phases()
+    elevator = make_delayed_elevator()
     output = StringIO()
     sleeper = RecordingSleeper(output)
 
     with patch(
-        "elevator_vibe_code.cli._create_elevator",
-        return_value=elevator,
+        "elevator_vibe_code.cli._create_elevator", return_value=elevator
     ):
         result = main(
             ["demo", "--step-delay", "0"],
-            generator=generator,
+            generator=FakePhaseGenerator((upward_phase,), (downward_phase,)),
             output=output,
             sleeper=sleeper,
         )
 
     assert result == 0
     assert sleeper.delays == []
-    assert elevator.actions.count("step") == 2
+    assert elevator.step_count == 3
 
 
 @pytest.mark.parametrize("step_delay", ["-0.1", "nan", "inf", "-inf", "texto"])
@@ -368,7 +447,7 @@ def test_demo_rejects_invalid_step_delay(step_delay: str) -> None:
     with pytest.raises(SystemExit) as error:
         main(
             ["demo", "--step-delay", step_delay],
-            generator=FakeRoundGenerator(()),
+            generator=FakePhaseGenerator((), ()),
             output=StringIO(),
         )
 
@@ -379,7 +458,7 @@ def test_demo_rejects_step_delay_with_underscore() -> None:
     with pytest.raises(SystemExit) as error:
         main(
             ["demo", "--step_delay", "2"],
-            generator=FakeRoundGenerator(()),
+            generator=FakePhaseGenerator((), ()),
             output=StringIO(),
         )
 
@@ -391,7 +470,7 @@ def test_demo_rejects_invalid_round_count(rounds: str) -> None:
     with pytest.raises(SystemExit) as error:
         main(
             ["demo", "--rounds", rounds],
-            generator=FakeRoundGenerator(()),
+            generator=FakePhaseGenerator((), ()),
             output=StringIO(),
         )
 
@@ -399,30 +478,28 @@ def test_demo_rejects_invalid_round_count(rounds: str) -> None:
 
 
 def test_demo_executes_three_rounds_on_the_same_elevator() -> None:
-    rounds = (
-        make_service_round(),
-        make_service_round(),
-        make_service_round(),
+    upward_phase, downward_phase = make_service_phases()
+    generator = FakePhaseGenerator(
+        (upward_phase, upward_phase, upward_phase),
+        (downward_phase, downward_phase, downward_phase),
     )
-    events = tuple(
-        make_event(
-            EventKind.IDLE,
-            elapsed_seconds=index,
-            direction=Direction.IDLE,
-        )
-        for index in range(3)
+    terminal_events = tuple(
+        (make_event(EventKind.IDLE, elapsed_seconds=index),)
+        for index in range(6)
     )
-    generator = FakeRoundGenerator(rounds)
     elevator = FakeElevator(
         (
             make_snapshot(0, 0),
-            make_snapshot(10, 12),
-            make_snapshot(10, 12),
+            make_snapshot(5, 8),
+            make_snapshot(10, 0),
+            make_snapshot(10, 0),
+            make_snapshot(14, 8),
             make_snapshot(18, 0),
             make_snapshot(18, 0),
-            make_snapshot(31, 12),
+            make_snapshot(24, 8),
+            make_snapshot(31, 0),
         ),
-        ((events[0],), (events[1],), (events[2],)),
+        terminal_events,
     )
     output = StringIO()
 
@@ -438,43 +515,29 @@ def test_demo_executes_three_rounds_on_the_same_elevator() -> None:
 
     assert result == 0
     create_elevator.assert_called_once_with()
-    assert generator.generate_count == 3
-    assert elevator.started_rounds == list(rounds)
-    assert elevator.actions == [
-        "snapshot",
-        "start_round",
-        "step",
-        "snapshot",
-        "snapshot",
-        "start_round",
-        "step",
-        "snapshot",
-        "snapshot",
-        "start_round",
-        "step",
-        "snapshot",
-    ]
+    assert generator.upward_count == 3
+    assert generator.downward_count == 3
     lines = output.getvalue().splitlines()
-    round_headers = [line for line in lines if line.startswith("Rodada ")]
-    assert round_headers == ["Rodada 1", "Rodada 2", "Rodada 3"]
+    assert [line for line in lines if line.startswith("Rodada ")] == [
+        "Rodada 1",
+        "Rodada 2",
+        "Rodada 3",
+    ]
     summaries = [line for line in lines if line.startswith("Resumo: ")]
     assert summaries == [
-        "Resumo: Andar final 12 | Tempo 00:10 | Atendidos 3 | "
+        "Resumo: Andar final 00 | Tempo 00:10 | Atendidos 4 | "
         "Filas: subida 0, descida 0",
-        "Resumo: Andar final 00 | Tempo 00:08 | Atendidos 3 | "
+        "Resumo: Andar final 00 | Tempo 00:08 | Atendidos 4 | "
         "Filas: subida 0, descida 0",
-        "Resumo: Andar final 12 | Tempo 00:13 | Atendidos 3 | "
+        "Resumo: Andar final 00 | Tempo 00:13 | Atendidos 4 | "
         "Filas: subida 0, descida 0",
     ]
 
 
 def test_demo_uses_default_generator_factory() -> None:
-    service_round = make_service_round()
-    generator = FakeRoundGenerator((service_round,))
-    elevator = FakeElevator(
-        (make_snapshot(0, 0), make_snapshot(4, 12)),
-        ((),),
-    )
+    upward_phase, downward_phase = make_service_phases()
+    generator = FakePhaseGenerator((upward_phase,), (downward_phase,))
+    elevator = make_one_step_elevator()
 
     with (
         patch(
@@ -500,8 +563,7 @@ def test_demo_composes_seeded_generation_models_engine_and_cli() -> None:
     output = StringIO()
 
     with patch(
-        "elevator_vibe_code.cli._create_elevator",
-        return_value=elevator,
+        "elevator_vibe_code.cli._create_elevator", return_value=elevator
     ):
         result = main(
             ["demo", "--rounds", "2", "--step-delay", "0"],
@@ -518,6 +580,8 @@ def test_demo_composes_seeded_generation_models_engine_and_cli() -> None:
         "Rodada 1",
         "Rodada 2",
     ]
+    assert lines.count("Subida:") == 2
+    assert lines.count("Descida:") == 2
     assert len(summaries) == 2
     assert all(
         summary.endswith("Filas: subida 0, descida 0") for summary in summaries
