@@ -14,8 +14,8 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
 
 - [x] (2026-07-27 00:46Z) Investigados a arquitetura, os padrões e os contratos públicos da CLI.
 - [x] (2026-07-27 00:46Z) Criado este ExecPlan com a estratégia de isolamento.
-- [ ] Implementar e testar a formatação de eventos.
-- [ ] Implementar e testar uma rodada isolada.
+- [x] (2026-07-27 00:56Z) Implementada e testada a formatação dos oito tipos de evento.
+- [x] (2026-07-27 01:12Z) Implementados e testados argumentos e uma rodada isolada.
 - [ ] Implementar e testar rodadas sucessivas e seus resumos.
 - [ ] Expor o ponto de entrada do pacote e executar todas as validações.
 - [ ] Arquivar este plano em `docs/exec_plans/completed/implementar_cli_elevador.md`.
@@ -27,6 +27,9 @@ Esta parte será desenvolvida sem incorporar as implementações de modelos, ger
 
 - Observação: o executável `uv` não está disponível no ambiente de implementação.
   Evidência: `uv run python -m tools.validators.check_exec_plans` encerrou com código 127 e `/bin/bash: uv: command not found`; somente `python3` e `pytest` foram encontrados no `PATH`.
+
+- Observação: `Mock(name=...)` define o nome interno do mock, não o atributo de domínio `.name`.
+  Evidência: os testes de passageiros passaram depois que `passenger.name` foi configurado explicitamente; 13 testes da CLI estão aprovados.
 
 ## Registro de Decisões
 
