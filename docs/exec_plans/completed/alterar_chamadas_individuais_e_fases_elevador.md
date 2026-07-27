@@ -25,11 +25,16 @@ descida, e o resumo deve terminar com cabine e filas vazias.
   de negócio, contratos, testes e estado do Git.
 - [x] (2026-07-27 23:33Z) Criada a branch
   `feat/add_novas_regras_elevador` a partir de `373319c`.
-- [ ] Migrar os modelos e o gerador para fases independentes.
-- [ ] Adaptar o motor para solicitações com origens individuais.
-- [ ] Integrar a orquestração sequencial e a apresentação na CLI.
-- [ ] Atualizar regras de negócio, arquitetura e testes de composição.
-- [ ] Executar todas as validações e mover este plano para `completed/`.
+- [x] (2026-07-27 23:36Z) Migrados os modelos e o gerador para fases
+  independentes; 28 testes focados passaram.
+- [x] (2026-07-27 23:39Z) Adaptado o motor para solicitações com origens
+  individuais; 14 testes focados passaram.
+- [x] (2026-07-27 23:43Z) Integradas a orquestração sequencial e a
+  apresentação individual na CLI.
+- [x] (2026-07-27 23:43Z) Atualizadas regras de negócio, arquitetura e
+  testes de composição; os 69 testes unitários passaram.
+- [x] (2026-07-27 23:45Z) Ruff, Ruff Format, Mypy, 113 testes, validador
+  de ExecPlans e demonstração real passaram; plano movido para `completed/`.
 
 ## Surpresas e Descobertas
 
@@ -39,8 +44,14 @@ descida, e o resumo deve terminar com cabine e filas vazias.
 
 - Observação: `uv` não está no `PATH` da sessão, embora esteja instalado em
   `/home/lvaz/.local/bin/uv`.
-  Evidência: a validação pelo nome retornou código 127 e a execução pelo
-  caminho absoluto aprovou 115 testes.
+  Evidência: a validação pelo nome retornou código 127 e as validações pelo
+  caminho absoluto passaram.
+
+- Observação: o helper nativo de patches depende de `bwrap`, ausente neste
+  ambiente.
+  Evidência: as tentativas de edição retornaram panic no launcher; os patches
+  seguintes foram gerados em diretórios temporários e aplicados atomicamente
+  pelo Git.
 
 ## Registro de Decisões
 
@@ -69,8 +80,16 @@ descida, e o resumo deve terminar com cabine e filas vazias.
 
 ## Resultados e Retrospectiva
 
-Ainda não há resultados de implementação. Esta seção será atualizada ao final
-de cada marco e na conclusão.
+A implementação substituiu chamadas agregadas por `ServicePhase`, separou a
+geração em subida e descida, adaptou o motor para múltiplas origens e tornou a
+ordem entre as fases observável na CLI. A demonstração real exibiu cada
+solicitação individual, gerou a descida depois do evento ocioso da subida e
+terminou duas rodadas no térreo, com cabine e filas vazias.
+
+Ruff, Ruff Format, Mypy, o validador de ExecPlans e os 113 testes passaram,
+com 97% de cobertura do pacote. Nenhuma dependência foi adicionada, o delay
+configurável foi preservado e o arquivo não rastreado de organização permaneceu
+intocado.
 
 ## Contexto e Orientação
 
